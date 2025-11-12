@@ -74,16 +74,36 @@ private val mockOrders = listOf(
 fun HistoryScreen(
     onBackClick: () -> Unit = {}
 ) {
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var orderHistory by remember { mutableStateOf<List<OrderHistoryItem>>(emptyList()) }
-
-    /* giả lập load dữ liệu */
-    LaunchedEffect(Unit) {
-        isLoading = true
-        kotlinx.coroutines.delay(800)
-        orderHistory = mockOrders
-        isLoading = false
+    // ✅ MOCK DATA
+    val orderHistory = remember {
+        listOf(
+            OrderHistoryItem(
+                id = "A12345",
+                date = "12/09/2025",
+                items = listOf(
+                    "2 Cà phê sữa",
+                    "1 Bánh mì"
+                ),
+                status = OrderStatus.DELIVERED
+            ),
+            OrderHistoryItem(
+                id = "B67890",
+                date = "10/09/2025",
+                items = listOf(
+                    "1 Trà đào",
+                    "1 Latte"
+                ),
+                status = OrderStatus.DELIVERING
+            ),
+            OrderHistoryItem(
+                id = "C11223",
+                date = "05/09/2025",
+                items = listOf(
+                    "1 Espresso"
+                ),
+                status = OrderStatus.CANCELLED
+            )
+        )
     }
 
     Scaffold(
@@ -113,63 +133,22 @@ fun HistoryScreen(
         },
         containerColor = HighlandWhite
     ) { paddingValues ->
-        when {
-            isLoading -> LoadingState(paddingValues)
-            error != null -> ErrorState(
-                message = error!!,
-                paddingValues = paddingValues,
-                onRetry = {
-                    error = null
-                    isLoading = true
-                }
-            )
-            else -> OrderList(
-                orders = orderHistory,
-                paddingValues = paddingValues
-            )
-        }
-    }
-}
-
-/* -------------------- STATES -------------------- */
-
-@Composable
-private fun LoadingState(paddingValues: PaddingValues) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator(color = HighlandRed)
-    }
-}
-
-@Composable
-private fun ErrorState(
-    message: String,
-    paddingValues: PaddingValues,
-    onRetry: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(message, color = HighlandText)
-        Spacer(modifier = Modifier.height(12.dp))
-        Button(
-            onClick = onRetry,
-            colors = ButtonDefaults.buttonColors(containerColor = HighlandRed),
-            shape = RoundedCornerShape(12.dp)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp)
         ) {
-            Text("Thử lại", color = HighlandWhite, fontWeight = FontWeight.Bold)
+            items(orderHistory) { order ->
+                OrderHistoryCard(order = order)
+            }
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
     }
 }
+
 
 @Composable
 private fun OrderList(
@@ -219,7 +198,6 @@ fun OrderHistoryCard(order: OrderHistoryItem) {
                 .padding(16.dp),
             verticalAlignment = Alignment.Top
         ) {
-
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.width(70.dp)
@@ -277,9 +255,9 @@ fun OrderHistoryCard(order: OrderHistoryItem) {
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                order.items.forEach {
+                order.items.forEach { item ->
                     Text(
-                        text = "• $it",
+                        text = "• $item",
                         fontSize = 14.sp,
                         color = HighlandText,
                         modifier = Modifier.padding(vertical = 2.dp)
@@ -297,6 +275,7 @@ fun OrderHistoryCard(order: OrderHistoryItem) {
         }
     }
 }
+
 
 /* -------------------- PREVIEW -------------------- */
 

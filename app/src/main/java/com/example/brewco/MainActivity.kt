@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.brewco.ui.LoginScreen
+import com.example.brewco.ui.SplashScreen
 import com.example.brewco.ui.theme.BrewCoTheme
 
 class MainActivity : ComponentActivity() {
@@ -23,7 +24,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             BrewCoTheme {
-                var currentScreen by remember { mutableStateOf(Screen.Login) }
+                var currentScreen by remember { mutableStateOf(Screen.Splash) }
 
                 AnimatedContent(
                     targetState = currentScreen,
@@ -34,10 +35,15 @@ class MainActivity : ComponentActivity() {
                     label = "screen_transition"
                 ) { screen ->
                     when (screen) {
+                        Screen.Splash -> SplashScreen(
+                            onSplashFinished = { currentScreen = Screen.Login }
+                        )
                         Screen.Login -> LoginScreen(
                             onForgotPasswordClick = { },
                             onSignUpClick = {},
+                            onLoginClick = {}
                         )
+                        
                     }
                 }
             }
@@ -45,6 +51,9 @@ class MainActivity : ComponentActivity() {
     }
 
     enum class Screen {
+        Splash,
         Login,
+        ForgotPassword,
+        SignUp
     }
 }

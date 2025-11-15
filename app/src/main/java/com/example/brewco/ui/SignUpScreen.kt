@@ -77,7 +77,30 @@ fun SignUpScreen(
     onSignUpSubmit: (String) -> Unit = {},
     onNavigateToOTP: (String) -> Unit = {}
 ) {
-    
+    var emailAddress by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    var fullName by remember { mutableStateOf("") }
+    var birthday by remember { mutableStateOf("") }
+    var gender by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
+
+    val genderOptions = listOf("Nam", "Nữ", "Khác")
+    val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+
+   
+    val isFormValid = emailAddress.isNotEmpty() &&
+        phoneNumber.isNotEmpty() &&
+        fullName.isNotEmpty() &&
+        birthday.isNotEmpty() &&
+        gender.isNotEmpty() &&
+        password.isNotEmpty() &&
+        password == confirmPassword
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -141,7 +164,241 @@ fun SignUpScreen(
                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
             )
 
+            OutlinedTextField(
+                value = emailAddress,
+                onValueChange = { emailAddress = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                placeholder = {
+                    Text("Nhập địa chỉ gmail", color = CafeGrayText, fontSize = 16.sp)
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.LightGray,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                singleLine = true,
+                shape = RoundedCornerShape(6.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = phoneNumber,
+                onValueChange = { phoneNumber = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                placeholder = {
+                    Text("Nhập số điện thoại", color = CafeGrayText, fontSize = 16.sp)
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.LightGray,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+                leadingIcon = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text(text = "+84", color = Color.Black, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 4.dp))
+                        HorizontalDivider(
+                            modifier = Modifier
+                                .height(24.dp)
+                                .width(1.dp),
+                            color = Color.LightGray
+                        )
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(6.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = fullName,
+                onValueChange = { fullName = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                placeholder = { Text("Nhập họ và tên", color = CafeGrayText, fontSize = 16.sp) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.LightGray,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                singleLine = true,
+                shape = RoundedCornerShape(6.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { expanded = !expanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = gender,
+                    onValueChange = {},
+                    readOnly = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .menuAnchor(),
+                    placeholder = { Text("Chọn giới tính", color = CafeGrayText, fontSize = 16.sp) },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.LightGray,
+                        unfocusedBorderColor = Color.LightGray,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(6.dp)
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.background(Color.White)
+                ) {
+                    genderOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(text = option) },
+                            onClick = {
+                                gender = option
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                placeholder = { Text("Nhập mật khẩu", color = CafeGrayText, fontSize = 16.sp) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.LightGray,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                singleLine = true,
+                shape = RoundedCornerShape(6.dp),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Image(
+                            painter = painterResource(id = if (passwordVisible) R.drawable.eye else R.drawable.close_eye),
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                placeholder = { Text("Xác nhận mật khẩu", color = CafeGrayText, fontSize = 16.sp) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.LightGray,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    focusManager.clearFocus()
+                    if (isFormValid) {
+                        onSignUpSubmit(emailAddress)
+                    }
+                }),
+                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                singleLine = true,
+                shape = RoundedCornerShape(6.dp),
+                trailingIcon = {
+                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                        Image(
+                            painter = painterResource(id = if (confirmPasswordVisible) R.drawable.eye else R.drawable.close_eye),
+                            contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            )
+
+            if (password.isNotEmpty() && confirmPassword.isNotEmpty() && password != confirmPassword) {
+                Text(
+                    text = "Mật khẩu không khớp",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = {
+                    if (isFormValid) {
+                        Toast.makeText(context, "Đăng ký thành công (mock)!", Toast.LENGTH_SHORT).show()
+                        onNavigateToOTP(emailAddress)
+                    } else {
+                        Toast.makeText(context, "Vui lòng kiểm tra lại thông tin", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(25.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = CafeButtonBackground),
+                enabled = isFormValid
+            ) {
+                Text(text = "Xác nhận", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Đã có tài khoản? ", color = HighlandText, fontSize = 12.sp)
+                Text(
+                    text = "Đăng nhập",
+                    color = HighlandRed,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onBackClick() }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

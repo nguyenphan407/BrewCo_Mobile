@@ -439,6 +439,7 @@ fun SignUpScreen(
                 onClick = {
                     if (isFormValid) {
                         Toast.makeText(context, "Đăng ký thành công (mock)!", Toast.LENGTH_SHORT).show()
+                        onSignUpSubmit(emailAddress)
                         onNavigateToOTP(emailAddress)
                     } else {
                         Toast.makeText(context, "Vui lòng kiểm tra lại thông tin", Toast.LENGTH_SHORT).show()

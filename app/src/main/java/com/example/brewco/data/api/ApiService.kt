@@ -4,6 +4,7 @@ import com.example.brewco.data.dto.CategoryListResponse
 import com.example.brewco.data.dto.CategoryRequest
 import com.example.brewco.data.dto.CategoryResponse
 import com.example.brewco.data.dto.ProductCreateRequest
+import com.example.brewco.data.dto.ProductDetailResponse
 import com.example.brewco.data.dto.ProductListResponse
 import com.example.brewco.data.dto.ProductResponse
 import okhttp3.ResponseBody
@@ -20,7 +21,22 @@ import retrofit2.http.Query
  * Chỉ giữ các endpoint phục vụ BookedScreen + admin product/category.
  */
 interface ApiService {
+    // Must try products
+    @GET("api/products/must-try")
+    fun getMustTryProducts(): Call<List<ProductResponse>>
+
+    // Product detail
+    @GET("api/products/id/{productId}")
+    fun getProductDetail(@Path("productId") productId: String): Call<com.example.brewco.data.dto.ProductDetailResponse>
+
     // Products
+    @GET("api/products")
+    fun getProductsPaginated(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20,
+        @Query("sort") sort: String? = null
+    ): Call<ProductListResponse>
+
     @GET("api/products")
     fun getProducts(
         @Query("page") page: Int = 0,

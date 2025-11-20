@@ -13,13 +13,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.example.brewco.ui.BookedScreen
 import com.example.brewco.ui.ChangePasswordScreen
+import com.example.brewco.ui.DifferScreen
 import com.example.brewco.ui.ForgotPasswordScreen
+import com.example.brewco.ui.HistoryScreen
 import com.example.brewco.ui.LoginScreen
 import com.example.brewco.ui.OTP_FGPassScreen
 import com.example.brewco.ui.OTP_SignUpScreen
 import com.example.brewco.ui.SignUpScreen
 import com.example.brewco.ui.SplashScreen
+import com.example.brewco.ui.UserInfScreen
+import com.example.brewco.ui.admin.AdminScreen
 import com.example.brewco.ui.theme.BrewCoTheme
 
 class MainActivity : ComponentActivity() {
@@ -47,7 +52,9 @@ class MainActivity : ComponentActivity() {
                         Screen.Login -> LoginScreen(
                             onForgotPasswordClick = { currentScreen = Screen.ForgotPassword },
                             onSignUpClick = { currentScreen = Screen.SignUp },
-                            onLoginClick = { _ -> }
+                            onLoginClick = { isAdmin ->
+                                currentScreen = if (isAdmin) Screen.Admin else Screen.Order
+                            }
                         )
                         Screen.ForgotPassword -> ForgotPasswordScreen(
                             onBackToLogin = { currentScreen = Screen.Login },
@@ -88,6 +95,64 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = Screen.Login
                             }
                         )
+                        Screen.Admin -> AdminScreen(
+                            onBackClick = { currentScreen = Screen.Login }
+                        )
+                        Screen.Order -> BookedScreen(
+                            onNavigationItemClick = { route ->
+                                currentScreen = when (route) {
+                                    "home" -> Screen.Home
+                                    "order" -> Screen.Order
+                                    "rewards" -> Screen.Rewards
+                                    "differ" -> Screen.Differ
+                                    else -> Screen.Order
+                                }
+                            }
+                        )
+                        Screen.Differ -> DifferScreen(
+                            onNavigationItemClick = { route ->
+                                currentScreen = when (route) {
+                                    "home" -> Screen.Home
+                                    "order" -> Screen.Order
+                                    "rewards" -> Screen.Rewards
+                                    "differ" -> Screen.Differ
+                                    // support both spellings
+                                    "user_info", "userinfo" -> Screen.UserInfo
+                                    else -> Screen.Differ
+                                }
+                            },
+                            onHistoryClick = { currentScreen = Screen.History },
+                            onLogoutClick = { currentScreen = Screen.Login }
+                        )
+                        Screen.UserInfo -> UserInfScreen(
+                            onBackClick = { currentScreen = Screen.Differ }
+                        )
+                        Screen.History -> HistoryScreen(
+                            onBackClick = { currentScreen = Screen.Differ }
+                        )
+                        Screen.Home -> BookedScreen(
+                            onNavigationItemClick = { route ->
+                                currentScreen = when (route) {
+                                    "home" -> Screen.Home
+                                    "order" -> Screen.Order
+                                    "rewards" -> Screen.Rewards
+                                    "differ" -> Screen.Differ
+                                    else -> Screen.Home
+                                }
+                            }
+                        )
+                        Screen.Rewards -> DifferScreen(
+                            onNavigationItemClick = { route ->
+                                currentScreen = when (route) {
+                                    "home" -> Screen.Home
+                                    "order" -> Screen.Order
+                                    "rewards" -> Screen.Rewards
+                                    "differ" -> Screen.Differ
+                                    "user_info", "userinfo" -> Screen.UserInfo
+                                    else -> Screen.Rewards
+                                }
+                            }
+                        )
                     }
                 }
             }
@@ -101,6 +166,15 @@ class MainActivity : ComponentActivity() {
         SignUp,
         OtpForgot,
         ChangePassword,
-        OtpSignUp
+        OtpSignUp,
+        // main app screens
+        Home,
+        Order,
+        Rewards,
+        Differ,
+        UserInfo,
+        History,
+        // admin
+        Admin
     }
 }

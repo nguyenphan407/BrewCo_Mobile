@@ -1,3 +1,28 @@
 <resources>
     <string name="app_name">BrewCo</string>
+    <!-- Admin Category -->
+    <string name="admin_category_title">Admin - Quản lý danh mục</string>
+    <string name="admin_category_search_hint">Tìm kiếm danh mục</string>
+    <string name="admin_category_empty">Chưa có danh mục</string>
+    <string name="admin_category_not_found">Không tìm thấy danh mục</string>
+    <string name="admin_category_error_code">Lỗi lấy danh mục: %1$d</string>
+    <string name="admin_category_error_connection">Lỗi kết nối: %1$s</string>
+    <string name="admin_category_add_success">Tạo danh mục thành công</string>
+    <string name="admin_category_add_fail">Tạo thất bại (%1$d)</string>
+    <string name="admin_category_update_success">Cập nhật thành công</string>
+    <string name="admin_category_update_fail">Cập nhật thất bại (%1$d)</string>
+    <string name="admin_category_delete_success">Đã xoá danh mục</string>
+    <string name="admin_category_delete_fail">Xoá thất bại (%1$d)</string>
+    <string name="admin_category_validation_name">Tên danh mục không được để trống</string>
+    <string name="admin_category_dialog_add">Thêm danh mục</string>
+    <string name="admin_category_dialog_edit">Chỉnh sửa danh mục</string>
+    <string name="admin_category_field_name">Tên danh mục</string>
+    <string name="admin_category_field_description">Mô tả</string>
+    <string name="admin_action_add">Thêm</string>
+    <string name="admin_action_save">Lưu</string>
+    <string name="admin_action_cancel">Hủy</string>
+    <string name="admin_action_edit">Sửa</string>
+    <string name="admin_action_delete">Xoá</string>
+    <string name="admin_category_delete_title">Xoá danh mục</string>
+    <string name="admin_category_delete_body">Bạn có chắc chắn muốn xoá "%1$s"?</string>
 </resources>

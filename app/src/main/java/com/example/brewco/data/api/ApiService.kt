@@ -84,6 +84,9 @@ interface ApiService {
     @GET("api/categories")
     fun getCategories(): Call<CategoryListResponse>
 
+    @GET("api/categories/{id}")
+    fun getCategoryDetail(@Path("id") categoryId: String): Call<CategoryResponse>
+
     @POST("api/categories")
     fun createCategory(@Body request: CategoryRequest): Call<CategoryResponse>
 

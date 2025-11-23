@@ -86,7 +86,7 @@ fun PrdScreen(
         return
     }
 
-  
+    var showSuccessDialog by remember { mutableStateOf(false) }
     var isInWishlist by remember { mutableStateOf(false) }
     var isDescriptionExpanded by remember { mutableStateOf(false) }
     var quantity by remember { mutableStateOf(1) }
@@ -100,11 +100,22 @@ fun PrdScreen(
                             Icon(
                                 painter = painterResource(id = R.drawable.ic_love),
             isAddingToCart = false
-           
+            showSuccessDialog = true
         }
     }
 
-
+    if (showSuccessDialog) {
+        SuccessDialog(
+            onDismiss = {
+                showSuccessDialog = false
+                onNavigateToMain()
+            },
+            onViewCart = {
+                showSuccessDialog = false
+                onViewCart()
+            }
+        )
+    }
 
     Scaffold(
         containerColor = HighlandWhite,
@@ -381,7 +392,76 @@ private fun BottomSummaryBar(
     }
 }
 
+@Composable
+private fun SuccessDialog(
+    onDismiss: () -> Unit,
+    onViewCart: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .clip(RoundedCornerShape(24.dp))
+                .background(HighlandWhite)
+                .padding(24.dp)
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Đóng",
+                    tint = HighlandRed,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .size(24.dp)
+                        .clickable { onDismiss() }
+                )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_cart),
+                    contentDescription = "Success",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(64.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Đã thêm vào giỏ hàng!",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = HighlandText,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = buildSuccessMessage(),
+                    fontSize = 14.sp,
+                    color = HighlandText,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.clickable { onViewCart() }
+                )
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = HighlandRed),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Tiếp tục mua sắm", color = HighlandWhite, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
 
 private fun buildSuccessMessage() = buildAnnotatedString {
     append("Xem giỏ hàng của bạn tại ")

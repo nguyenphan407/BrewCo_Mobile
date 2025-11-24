@@ -1,7 +1,6 @@
 ﻿package com.example.brewco.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,12 +43,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -96,9 +92,9 @@ fun PrdScreen(
     fun handleAddToCart(item: ProductResponse) {
         if (isAddingToCart) return
         coroutineScope.launch {
-                        IconButton(onClick = { isInWishlist = !isInWishlist }) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_love),
+            isAddingToCart = true
+            delay(300)
+            MockCartStore.addProduct(item, quantity)
             isAddingToCart = false
             showSuccessDialog = true
         }
@@ -125,7 +121,7 @@ fun PrdScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
-                    painter = painterResource(id = R.drawable.ic_cart),
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Quay lại",
                             tint = HighlandWhite
                         )
@@ -156,7 +152,7 @@ fun PrdScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(rememberScrollState())
-                    painter = painterResource(id = R.drawable.ic_cart),
+        ) {
             HeaderImage(detail)
 
             Column(
@@ -408,17 +404,20 @@ private fun SuccessDialog(
                 .background(HighlandWhite)
                 .padding(24.dp)
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(24.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Đóng",
-                    tint = HighlandRed,
-                    modifier = Modifier
-                        .align(Alignment.End)
-                        .size(24.dp)
-                        .clickable { onDismiss() }
+                    tint = HighlandRed
                 )
+            }
 
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Icon(
@@ -438,35 +437,23 @@ private fun SuccessDialog(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = buildSuccessMessage(),
-                    fontSize = 14.sp,
-                    color = HighlandText,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.clickable { onViewCart() }
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(
+                        onClick = onViewCart,
+                        colors = ButtonDefaults.buttonColors(containerColor = HighlandRed),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Xem giỏ hàng", color = HighlandWhite, fontWeight = FontWeight.Bold)
+                    }
 
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Button(
-                    onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = HighlandRed),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Tiếp tục mua sắm", color = HighlandWhite, fontWeight = FontWeight.Bold)
+                    TextButton(onClick = onDismiss) {
+                        Text("Tiếp tục mua sắm", color = HighlandRed, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
-    }
-}
-
-private fun buildSuccessMessage() = buildAnnotatedString {
-    append("Xem giỏ hàng của bạn tại ")
-    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold, color = HighlandRed)) {
-        append("Giỏ hàng")
     }
 }
 

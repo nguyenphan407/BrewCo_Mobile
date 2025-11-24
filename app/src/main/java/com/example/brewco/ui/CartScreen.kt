@@ -159,7 +159,86 @@ fun CartScreen(
                             )
                         }
 
-                       
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 16.dp),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
+                            items(cartItems, key = { it.entryId }) { item ->
+                                CartOrderItem(
+                                    cartItem = item,
+                                    isSelected = selectedEntryIds.contains(item.entryId),
+                                    onSelectionChange = { checked ->
+                                        selectedEntryIds = if (checked) {
+                                            selectedEntryIds + item.entryId
+                                        } else {
+                                            selectedEntryIds - item.entryId
+                                        }
+                                    },
+                                    onRemove = { handleRemove(item) },
+                                    isRemoving = removingEntryId == item.entryId
+                                )
+                            }
+                            item { Spacer(modifier = Modifier.height(16.dp)) }
+                        }
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        text = "Tổng cộng:",
+                                        fontSize = 16.sp,
+                                        color = HighlandText
+                                    )
+                                    Text(
+                                        text = FormatUtils.formatPrice(totalPrice),
+                                        fontSize = 20.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = HighlandRed
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Button(
+                                    onClick = {
+                                        val checkoutItems = cartItems.filter { selectedEntryIds.contains(it.entryId) }
+                                        if (checkoutItems.isEmpty()) {
+                                            errorMessage = "Vui lòng chọn sản phẩm để thanh toán"
+                                            return@Button
+                                        }
+                                        errorMessage = null
+                                        val summary = CheckoutSummary(
+                                            orderId = "MOCK-${System.currentTimeMillis()}",
+                                            items = checkoutItems
+                                        )
+                                        onNavigateToPayment(summary)
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(52.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = HighlandRed),
+                                    shape = RoundedCornerShape(12.dp),
+                                    enabled = selectedEntryIds.isNotEmpty()
+                                ) {
+                                    Text(
+                                        text = "Thanh toán",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = HighlandWhite
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -209,6 +288,101 @@ private fun EmptyCartState(modifier: Modifier = Modifier) {
             color = HighlandText.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
+    }
+}
+
+@Composable
+private fun CartOrderItem(
+    cartItem: CartItem,
+    isSelected: Boolean,
+    onSelectionChange: (Boolean) -> Unit,
+    onRemove: () -> Unit,
+    isRemoving: Boolean
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .background(HighlandRed.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.coffee_beans),
+                    contentDescription = "Product",
+                    modifier = Modifier.size(48.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = cartItem.productName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = HighlandText,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Kích cỡ: ${cartItem.size}",
+                    fontSize = 13.sp,
+                    color = HighlandText.copy(alpha = 0.7f)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "SL: ${cartItem.quantity}",
+                    fontSize = 13.sp,
+                    color = HighlandText.copy(alpha = 0.7f)
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = FormatUtils.formatPrice(cartItem.price * cartItem.quantity),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = HighlandRed
+                )
+            }
+
+            Column(horizontalAlignment = Alignment.End) {
+                IconButton(
+                    onClick = onRemove,
+                    enabled = !isRemoving
+                ) {
+                    if (isRemoving) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = HighlandRed
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Xóa sản phẩm",
+                            tint = HighlandRed
+                        )
+                    }
+                }
+                Checkbox(
+                    checked = isSelected,
+                    onCheckedChange = onSelectionChange
+                )
+            }
+        }
     }
 }
 

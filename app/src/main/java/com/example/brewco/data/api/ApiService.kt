@@ -49,6 +49,9 @@ interface ApiService {
         @Query("sort") sort: String? = null
     ): Call<ProductListResponse>
 
+    @GET("api/auth/logout")
+    fun logout(@Header("Authorization") token: String): Call<Void>
+
     @GET("api/account/me")
     fun getCurrentUser(@Header("Authorization") token: String): Call<UserProfileResponse>
 

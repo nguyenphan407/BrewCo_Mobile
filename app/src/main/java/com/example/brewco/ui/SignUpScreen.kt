@@ -5,39 +5,14 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,16 +34,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.brewco.R
-import com.example.brewco.ui.theme.BrewCoTheme
+import com.example.brewco.data.api.ApiClient
+import com.example.brewco.data.dto.RegisterRequest
 import com.example.brewco.ui.theme.CafeBrown
-import com.example.brewco.ui.theme.CafeButtonBackground
 import com.example.brewco.ui.theme.CafeGrayText
 import com.example.brewco.ui.theme.CafeLoginBackground
+import com.example.brewco.ui.theme.BrewCoTheme
 import com.example.brewco.ui.theme.HighlandRed
 import com.example.brewco.ui.theme.HighlandText
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.util.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,29 +64,37 @@ fun SignUpScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+    
+    // Dropdown menu state
     var expanded by remember { mutableStateOf(false) }
-
     val genderOptions = listOf("Nam", "Nữ", "Khác")
+    
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
-
+    
+    // Date picker
     val calendar = Calendar.getInstance()
     val currentYear = calendar.get(Calendar.YEAR)
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
+    // Validate date format when manually entered
     val validateAndUpdateDate = { input: String ->
         try {
             if (input.isEmpty()) {
                 birthday = input
             } else {
-                val df = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply { isLenient = false }
+                // Attempt to parse the date to validate it
+                val df = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                df.isLenient = false
                 df.parse(input)
                 birthday = input
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            // If parsing fails, leave the field as is - could also show error
         }
     }
-
+    
+    // Year first date picker dialog
     val datePickerDialog = DatePickerDialog(
         context,
         R.style.DatePickerTheme,
@@ -118,29 +104,37 @@ fun SignUpScreen(
             calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
             birthday = dateFormatter.format(calendar.time)
         },
-        currentYear - 18,
+        currentYear - 18, // Default to 18 years ago
         calendar.get(Calendar.MONTH),
         calendar.get(Calendar.DAY_OF_MONTH)
     )
-
+    
+    // Setup date picker to show year selection first
     datePickerDialog.datePicker.apply {
+        // First set the max date to current date (can't choose future dates)
         maxDate = System.currentTimeMillis()
+        
+        // Default year range: current year - 80 years to current year
+        // This ensures easier selection for older people
         updateDate(currentYear - 18, calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
-    }   
-
+    }
+    
+    // Form validation
     val isFormValid = emailAddress.isNotEmpty() &&
-        phoneNumber.isNotEmpty() &&
-        fullName.isNotEmpty() &&
-        birthday.isNotEmpty() &&
-        gender.isNotEmpty() &&
-        password.isNotEmpty() &&
-        password == confirmPassword
-
+                     phoneNumber.isNotEmpty() && 
+                     fullName.isNotEmpty() && 
+                     birthday.isNotEmpty() && 
+                     gender.isNotEmpty() && 
+                     password.isNotEmpty() && 
+                     password == confirmPassword
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(CafeLoginBackground)
+            .background(CafeLoginBackground),
+        contentAlignment = Alignment.Center
     ) {
+        // Nút đóng (X) ở góc trên bên phải
         Text(
             text = "×",
             color = Color.Black,
@@ -151,7 +145,8 @@ fun SignUpScreen(
                 .clickable(onClick = onBackClick)
                 .padding(16.dp)
         )
-
+        
+        // Nội dung chính - căn giữa màn hình
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,6 +155,7 @@ fun SignUpScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Tiêu đề chào mừng
             Text(
                 text = "Chào mừng bạn đến với",
                 color = CafeBrown,
@@ -170,6 +166,7 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Logo Brew Co
             Text(
                 text = "Brew Co",
                 color = HighlandRed,
@@ -180,6 +177,7 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Subtitle Highlands
             Text(
                 text = buildAnnotatedString {
                     append("Điền các thông tin sau để trở thành\nthành viên của ")
@@ -198,15 +196,20 @@ fun SignUpScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
             )
-
+            
+            // Ô nhập địa chỉ Gmail
             OutlinedTextField(
                 value = emailAddress,
                 onValueChange = { emailAddress = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                placeholder = {
-                    Text("Nhập địa chỉ gmail", color = CafeGrayText, fontSize = 16.sp)
+                placeholder = { 
+                    Text(
+                        "Nhập địa chỉ gmail", 
+                        color = CafeGrayText,
+                        fontSize = 16.sp
+                    ) 
                 },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.LightGray,
@@ -214,21 +217,29 @@ fun SignUpScreen(
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White
                 ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
                 singleLine = true,
                 shape = RoundedCornerShape(6.dp)
             )
-
+            
             Spacer(modifier = Modifier.height(12.dp))
-
+            
+            // Ô nhập số điện thoại
             OutlinedTextField(
                 value = phoneNumber,
                 onValueChange = { phoneNumber = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                placeholder = {
-                    Text("Nhập số điện thoại", color = CafeGrayText, fontSize = 16.sp)
+                placeholder = { 
+                    Text(
+                        "Nhập số điện thoại", 
+                        color = CafeGrayText,
+                        fontSize = 16.sp
+                    ) 
                 },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.LightGray,
@@ -236,13 +247,22 @@ fun SignUpScreen(
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White
                 ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Phone,
+                    imeAction = ImeAction.Next
+                ),
                 leadingIcon = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
-                        Text(text = "+84", color = Color.Black, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 4.dp))
+                        Text(
+                            text = "+84",
+                            color = Color.Black,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        )
+
                         HorizontalDivider(
                             modifier = Modifier
                                 .height(24.dp)
@@ -254,48 +274,68 @@ fun SignUpScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(6.dp)
             )
-
+            
             Spacer(modifier = Modifier.height(12.dp))
-
+            
+            // Ô nhập họ tên
             OutlinedTextField(
                 value = fullName,
                 onValueChange = { fullName = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                placeholder = { Text("Nhập họ và tên", color = CafeGrayText, fontSize = 16.sp) },
+                placeholder = {
+                    Text(
+                        "Nhập họ và tên",
+                        color = CafeGrayText,
+                        fontSize = 16.sp
+                    )
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.LightGray,
                     unfocusedBorderColor = Color.LightGray,
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White
                 ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
                 singleLine = true,
                 shape = RoundedCornerShape(6.dp)
             )
-
+            
             Spacer(modifier = Modifier.height(12.dp))
-
+            
+            // Ô chọn ngày sinh - cho phép nhập thủ công hoặc chọn từ lịch
             OutlinedTextField(
                 value = birthday,
-                onValueChange = { validateAndUpdateDate(it) },
+                onValueChange = { input -> validateAndUpdateDate(input) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                placeholder = { Text("Chọn ngày sinh (DD/MM/YYYY)", color = CafeGrayText, fontSize = 16.sp) },
+                placeholder = {
+                    Text(
+                        "Chọn ngày sinh (DD/MM/YYYY)",
+                        color = CafeGrayText,
+                        fontSize = 16.sp
+                    )
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.LightGray,
                     unfocusedBorderColor = Color.LightGray,
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White
                 ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
                 singleLine = true,
                 shape = RoundedCornerShape(6.dp),
                 trailingIcon = {
                     Icon(
-                        painter = painterResource(id = android.R.drawable.ic_menu_my_calendar),
+                        painter = painterResource(id = android.R.drawable.ic_menu_my_calendar), 
                         contentDescription = "Select date",
                         tint = CafeGrayText,
                         modifier = Modifier.clickable {
@@ -305,7 +345,8 @@ fun SignUpScreen(
                     )
                 }
             )
-
+            
+            // Hint về định dạng ngày
             Text(
                 text = "Định dạng: Ngày/Tháng/Năm (VD: 15/05/2004)",
                 color = CafeGrayText,
@@ -314,9 +355,10 @@ fun SignUpScreen(
                     .align(Alignment.Start)
                     .padding(start = 4.dp, top = 2.dp)
             )
-
+            
             Spacer(modifier = Modifier.height(12.dp))
-
+            
+            // Dropdown menu for gender
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded },
@@ -330,8 +372,16 @@ fun SignUpScreen(
                         .fillMaxWidth()
                         .height(56.dp)
                         .menuAnchor(),
-                    placeholder = { Text("Chọn giới tính", color = CafeGrayText, fontSize = 16.sp) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    placeholder = {
+                        Text(
+                            "Chọn giới tính",
+                            color = CafeGrayText,
+                            fontSize = 16.sp
+                        )
+                    },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.LightGray,
                         unfocusedBorderColor = Color.LightGray,
@@ -340,7 +390,7 @@ fun SignUpScreen(
                     ),
                     shape = RoundedCornerShape(6.dp)
                 )
-
+                
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
@@ -357,73 +407,100 @@ fun SignUpScreen(
                     }
                 }
             }
-
+            
             Spacer(modifier = Modifier.height(12.dp))
-
+            
+            // Ô nhập mật khẩu
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                placeholder = { Text("Nhập mật khẩu", color = CafeGrayText, fontSize = 16.sp) },
+                placeholder = {
+                    Text(
+                        "Nhập mật khẩu",
+                        color = CafeGrayText,
+                        fontSize = 16.sp
+                    )
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.LightGray,
                     unfocusedBorderColor = Color.LightGray,
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White
                 ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Next
+                ),
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 singleLine = true,
                 shape = RoundedCornerShape(6.dp),
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Image(
-                            painter = painterResource(id = if (passwordVisible) R.drawable.eye else R.drawable.close_eye),
+                            painter = painterResource(
+                                id = if (passwordVisible) R.drawable.eye else R.drawable.close_eye
+                            ),
                             contentDescription = if (passwordVisible) "Hide password" else "Show password",
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             )
-
+            
             Spacer(modifier = Modifier.height(12.dp))
-
+            
+            // Ô xác nhận mật khẩu
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                placeholder = { Text("Xác nhận mật khẩu", color = CafeGrayText, fontSize = 16.sp) },
+                placeholder = {
+                    Text(
+                        "Xác nhận mật khẩu",
+                        color = CafeGrayText,
+                        fontSize = 16.sp
+                    )
+                },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.LightGray,
                     unfocusedBorderColor = Color.LightGray,
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White
                 ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = {
-                    focusManager.clearFocus()
-                    if (isFormValid) {
-                        onSignUpSubmit(emailAddress)
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                        if (isFormValid) {
+                            onSignUpSubmit(emailAddress)
+                        }
                     }
-                }),
+                ),
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 singleLine = true,
                 shape = RoundedCornerShape(6.dp),
                 trailingIcon = {
                     IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                         Image(
-                            painter = painterResource(id = if (confirmPasswordVisible) R.drawable.eye else R.drawable.close_eye),
+                            painter = painterResource(
+                                id = if (confirmPasswordVisible) R.drawable.eye else R.drawable.close_eye
+                            ),
                             contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
                             modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             )
-
+            
+            // Hiển thị thông báo nếu mật khẩu không khớp
             if (password.isNotEmpty() && confirmPassword.isNotEmpty() && password != confirmPassword) {
                 Text(
                     text = "Mật khẩu không khớp",
@@ -432,37 +509,70 @@ fun SignUpScreen(
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
-
+            
             Spacer(modifier = Modifier.height(24.dp))
-
+            
+            // Nút xác nhận
             Button(
                 onClick = {
                     if (isFormValid) {
-                        Toast.makeText(context, "Đăng ký thành công (mock)!", Toast.LENGTH_SHORT).show()
-                        onSignUpSubmit(emailAddress)
-                        onNavigateToOTP(emailAddress)
-                    } else {
-                        Toast.makeText(context, "Vui lòng kiểm tra lại thông tin", Toast.LENGTH_SHORT).show()
+                        val request = RegisterRequest(
+                            email = emailAddress,
+                            password = password,
+                            passwordConfirm = confirmPassword,
+                            fullName = fullName,
+//                            phone = phoneNumber
+                        )
+
+                        ApiClient.apiService.register(request).enqueue(object : Callback<Void> {
+                            override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                                if (response.isSuccessful) {
+                                    Toast.makeText(context, "Đăng ký thành công! Vui lòng xác thực OTP", Toast.LENGTH_SHORT).show()
+                                    onNavigateToOTP(emailAddress)
+                                } else {
+                                    val errorMsg = when(response.code()) {
+                                        400 -> "Thông tin đăng ký không hợp lệ"
+                                        409 -> "Email đã tồn tại trong hệ thống"
+                                        else -> "Đăng ký thất bại: ${response.code()}"
+                                    }
+                                    Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+                                }
+                            }
+
+                            override fun onFailure(call: Call<Void>, t: Throwable) {
+                                Toast.makeText(context, "Lỗi kết nối: ${t.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        })
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
                 shape = RoundedCornerShape(25.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CafeButtonBackground),
+                colors = ButtonDefaults.buttonColors(containerColor = HighlandRed),
                 enabled = isFormValid
             ) {
-                Text(text = "Xác nhận", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = "Xác nhận",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
-
+            
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Link quay lại đăng nhập
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Đã có tài khoản? ", color = HighlandText, fontSize = 12.sp)
+                Text(
+                    text = "Đã có tài khoản? ",
+                    color = HighlandText,
+                    fontSize = 12.sp
+                )
                 Text(
                     text = "Đăng nhập",
                     color = HighlandRed,
@@ -471,16 +581,14 @@ fun SignUpScreen(
                     modifier = Modifier.clickable { onBackClick() }
                 )
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun SignUpScreenPreview() {
+fun SignUpScreenPreview() {
     BrewCoTheme {
         SignUpScreen()
     }
-}
+} 

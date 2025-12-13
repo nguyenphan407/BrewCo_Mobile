@@ -41,7 +41,7 @@ object OrderStatusUpdater {
         onResult: (Boolean) -> Unit = {}
     ) {
         ApiClient.apiService.updateOrderStatus(
-            authorization = "Bearer $token",
+            token = "Bearer $token",
             orderId = orderId,
             request = UpdateOrderStatusRequest(status)
         ).enqueue(object : Callback<CreateOrderResponse> {

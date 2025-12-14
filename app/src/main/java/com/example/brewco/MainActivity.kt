@@ -31,12 +31,16 @@ class MainActivity : ComponentActivity() {
     private var vnpayResult by mutableStateOf<VnpayCallbackResult?>(null)
     private var pendingVnpayOrderId: String? = null
 
+    private companion object {
+        private const val TAG = "MainActivity"
+    }
+
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Xử lý deeplink khi khởi động
+
         handleDeepLink(intent)
 
         setContent {
@@ -50,7 +54,7 @@ class MainActivity : ComponentActivity() {
                 var selectedOrder: CheckoutSummary? by remember { mutableStateOf(null) }
                 var selectedVoucher: Voucher? by remember { mutableStateOf(null) }
 
-                // Get AuthManager instance
+
                 val authManager = remember { AuthManager.getInstance(this@MainActivity) }
                 val deepLinkResult = vnpayResult
                 val composeContext = LocalContext.current
@@ -71,7 +75,7 @@ class MainActivity : ComponentActivity() {
                                 )
                                 pendingVnpayOrderId = null
                             } else {
-                                Log.w("Deeplink", "Không tìm được orderId trong callback VNPAY")
+                                Log.w(TAG, "Không tìm được orderId trong callback VNPAY")
                             }
                         }
                         currentScreen = Screen.PaymentResult
@@ -174,8 +178,8 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                                 Screen.Main -> MainScreen(
-                                    onNotificationClick = { /* TODO */ },
-                                    onMenuClick = { /* TODO */ },
+                                    onNotificationClick = {  },
+                                    onMenuClick = {  },
                                     onNavigate = { destination ->
                                         when {
                                             destination == "differ" -> currentScreen = Screen.Differ
@@ -186,7 +190,7 @@ class MainActivity : ComponentActivity() {
                                                 productId = destination.removePrefix("product/")
                                                 currentScreen = Screen.ProductDetail
                                             }
-                                            else -> { /* Handle other navigation */ }
+                                            else -> {  }
                                         }
                                     },
                                     onNavigateToNoti = {
@@ -314,7 +318,7 @@ class MainActivity : ComponentActivity() {
                                             "order" -> currentScreen = Screen.Booked
                                             "rewards" -> currentScreen = Screen.Coupon
                                             "differ" -> currentScreen = Screen.Differ
-                                            else -> { /* Handle other navigation */ }
+                                            else -> {  }
                                         }
                                     }
                                 )
@@ -326,7 +330,7 @@ class MainActivity : ComponentActivity() {
                                             "order" -> currentScreen = Screen.Booked
                                             "rewards" -> currentScreen = Screen.Coupon
                                             "differ" -> currentScreen = Screen.Differ
-                                            else -> { /* Handle other navigation */ }
+                                            else -> {  }
                                         }
                                     },
                                     onFavoritesClick = {
@@ -352,7 +356,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Xử lý deeplink khi ứng dụng đã chạy
+
         setIntent(intent)
         handleDeepLink(intent)
     }
@@ -400,7 +404,7 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    // Enum để quản lý các màn hình
+
     enum class Screen {
         Login,
         ForgotPassword,

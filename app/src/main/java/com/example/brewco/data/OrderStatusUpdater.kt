@@ -15,8 +15,9 @@ object OrderStatusUpdater {
     const val STATUS_DONE = 2
     const val STATUS_CANCELLED = 3
 
-    private const val AUTH_PREFS = "auth_prefs"
-    private const val AUTH_TOKEN_KEY = "auth_token"
+    private const val TAG = "OrderStatusUpdater"
+
+    private fun bearer(rawToken: String) = "Bearer $rawToken"
 
     fun updateWithContext(
         context: Context,
@@ -24,10 +25,9 @@ object OrderStatusUpdater {
         status: Int,
         onResult: (Boolean) -> Unit = {}
     ) {
-        val prefs = context.getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE)
-        val token = prefs.getString(AUTH_TOKEN_KEY, null)
+        val token = AuthManager.getInstance(context).getAuthToken()
         if (token.isNullOrBlank()) {
-            Log.w("OrderStatusUpdater", "Missing auth token, cannot update status")
+            Log.w(TAG, "Missing auth token, cannot update status")
             onResult(false)
             return
         }
@@ -41,7 +41,7 @@ object OrderStatusUpdater {
         onResult: (Boolean) -> Unit = {}
     ) {
         ApiClient.apiService.updateOrderStatus(
-            token = "Bearer $token",
+            token = bearer(token),
             orderId = orderId,
             request = UpdateOrderStatusRequest(status)
         ).enqueue(object : Callback<CreateOrderResponse> {
@@ -54,7 +54,7 @@ object OrderStatusUpdater {
                 val success = response.isSuccessful && (body?.error == false || matchesRequestedStatus)
                 if (!success) {
                     Log.w(
-                        "OrderStatusUpdater",
+                        TAG,
                         "Status update ambiguous (code=${response.code()}, error=${body?.error}), assuming ${if (matchesRequestedStatus) "success" else "failure"}"
                     )
                 }
@@ -62,7 +62,7 @@ object OrderStatusUpdater {
             }
 
             override fun onFailure(call: Call<CreateOrderResponse>, t: Throwable) {
-                Log.e("OrderStatusUpdater", "Update status error", t)
+                Log.e(TAG, "Update status error", t)
                 onResult(false)
             }
         })

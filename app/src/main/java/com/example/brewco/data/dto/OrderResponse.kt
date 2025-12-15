@@ -1,5 +1,8 @@
 package com.example.brewco.data.dto
 
+import androidx.annotation.Keep
+
+@Keep
 data class OrderResponse(
     val error: Boolean,
     val statusCode: Int,
@@ -7,10 +10,12 @@ data class OrderResponse(
     val message: String
 )
 
+@Keep
 data class OrderData(
-    val content: List<OrderDetail> // Chỉ lấy content, bỏ qua các trường phân trang
+    val content: List<OrderDetail>
 )
 
+@Keep
 data class OrderDetail(
     val id: String,
     val orderItemList: List<OrderItem>,
@@ -20,6 +25,7 @@ data class OrderDetail(
     val orderStatus: Int
 )
 
+@Keep
 data class OrderItem(
     val id: String,
     val amount: Int,
@@ -27,5 +33,5 @@ data class OrderItem(
     val price: Int?,
     val description: String?,
     val imageUrl: String?
-    // Bỏ các trường lồng như productId, productCreatedAt nếu không cần
+
 )

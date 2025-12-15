@@ -6,60 +6,112 @@ import android.content.SharedPreferences
 class AuthManager(private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
+    private inline fun edit(block: SharedPreferences.Editor.() -> Unit) {
+        prefs.edit().apply(block).apply()
+    }
+
     fun saveLoginCredentials(email: String, password: String, remember: Boolean) {
         if (remember) {
-            prefs.edit()
-                .putString(KEY_EMAIL, email)
-                .putString(KEY_PASSWORD, password)
-                .putBoolean(KEY_REMEMBER_ME, true)
-                .apply()
+            edit {
+                putString(KEY_EMAIL, email)
+                putString(KEY_PASSWORD, password)
+                putBoolean(KEY_REMEMBER_ME, true)
+            }
         } else {
-            // Xóa thông tin đăng nhập nếu không chọn ghi nhớ
+
             clearLoginCredentials()
         }
     }
 
     fun saveUserInfo(userId: String, fullName: String, phone: String) {
-        prefs.edit()
-            .putString(KEY_USER_ID, userId)
-            .putString(KEY_FULL_NAME, fullName)
-            .putString(KEY_PHONE, phone)
-            .apply()
+        edit {
+            putString(KEY_USER_ID, userId)
+            putString(KEY_FULL_NAME, fullName)
+            putString(KEY_PHONE, phone)
+        }
     }
 
     fun clearLoginCredentials() {
-        prefs.edit()
-            .remove(KEY_EMAIL)
-            .remove(KEY_PASSWORD)
-            .remove(KEY_USER_ID)
-            .remove(KEY_FULL_NAME)
-            .remove(KEY_PHONE)
-            .putBoolean(KEY_REMEMBER_ME, false)
+
+        clearRememberedCredentials()
+        clearUserInfo()
+    }
+
+    fun clearRememberedCredentials() {
+        edit {
+            remove(KEY_EMAIL)
+            remove(KEY_PASSWORD)
+            putBoolean(KEY_REMEMBER_ME, false)
+        }
+    }
+
+    fun clearUserInfo() {
+        edit {
+            remove(KEY_USER_ID)
+            remove(KEY_FULL_NAME)
+            remove(KEY_PHONE)
+        }
+    }
+
+    fun getSavedEmail(): String= prefs.getString(KEY_EMAIL, "") ?: ""
+    fun getSavedPassword(): String= prefs.getString(KEY_PASSWORD, "") ?: ""
+    fun getSavedUserId(): String?= prefs.getString(KEY_USER_ID, null)
+    fun getSavedFullName(): String?= prefs.getString(KEY_FULL_NAME, null)
+    fun getSavedPhone(): String?= prefs.getString(KEY_PHONE, null)
+    fun isRememberMeEnabled(): Boolean= prefs.getBoolean(KEY_REMEMBER_ME, false)
+
+    fun saveAuthToken(token: String) {
+        val authPrefs = context.getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE)
+        authPrefs.edit().putString(KEY_AUTH_TOKEN, token).apply()
+    }
+
+    fun saveRefreshToken(token: String) {
+        val authPrefs = context.getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE)
+        authPrefs.edit().putString(KEY_REFRESH_TOKEN, token).apply()
+    }
+
+    fun saveTokens(accessToken: String, refreshToken: String?) {
+        val authPrefs = context.getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE)
+        authPrefs.edit()
+            .putString(KEY_AUTH_TOKEN, accessToken)
+            .putString(KEY_REFRESH_TOKEN, refreshToken.orEmpty())
             .apply()
     }
 
-    fun getSavedEmail(): String {
-        return prefs.getString(KEY_EMAIL, "") ?: ""
+    fun getAuthToken(): String? {
+        val authPrefs = context.getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE)
+        return authPrefs.getString(KEY_AUTH_TOKEN, null)
     }
 
-    fun getSavedPassword(): String {
-        return prefs.getString(KEY_PASSWORD, "") ?: ""
+    fun getRefreshToken(): String? {
+        val authPrefs = context.getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE)
+        return authPrefs.getString(KEY_REFRESH_TOKEN, null)
     }
 
-    fun getSavedUserId(): String? {
-        return prefs.getString(KEY_USER_ID, null)
+    fun clearAuthToken() {
+        val authPrefs = context.getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE)
+        authPrefs.edit().remove(KEY_AUTH_TOKEN).apply()
     }
 
-    fun getSavedFullName(): String? {
-        return prefs.getString(KEY_FULL_NAME, null)
+    fun clearRefreshToken() {
+        val authPrefs = context.getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE)
+        authPrefs.edit().remove(KEY_REFRESH_TOKEN).apply()
     }
 
-    fun getSavedPhone(): String? {
-        return prefs.getString(KEY_PHONE, null)
+    fun isLoggedIn(): Boolean {
+        return !getAuthToken().isNullOrBlank()
     }
 
-    fun isRememberMeEnabled(): Boolean {
-        return prefs.getBoolean(KEY_REMEMBER_ME, false)
+    fun logout() {
+        clearAuthToken()
+        clearRefreshToken()
+        clearLoginCredentials()
+    }
+
+    fun clearAllData() {
+        prefs.edit().clear().apply()
+        val authPrefs = context.getSharedPreferences(AUTH_PREFS, Context.MODE_PRIVATE)
+        authPrefs.edit().clear().apply()
     }
 
     companion object {
@@ -70,6 +122,11 @@ class AuthManager(private val context: Context) {
         private const val KEY_USER_ID = "user_id"
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_PHONE = "phone"
+
+
+        private const val AUTH_PREFS = "auth_prefs"
+        private const val KEY_AUTH_TOKEN = "auth_token"
+        private const val KEY_REFRESH_TOKEN = "refresh_token"
 
         @Volatile
         private var instance: AuthManager? = null

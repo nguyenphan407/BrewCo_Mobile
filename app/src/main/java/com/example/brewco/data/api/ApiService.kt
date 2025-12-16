@@ -33,47 +33,45 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
-/**
- * BrewCo API Service - All endpoints
- */
+
 interface ApiService {
-    // Auth endpoints
+
     @POST("api/auth/login")
     fun login(@Body request: LoginRequest): Call<LoginResponse>
-    
+
     @POST("api/auth/register")
     fun register(@Body request: RegisterRequest): Call<Void>
 
     @GET("api/auth/email-verification/{id}")
     fun verifyOtp(@Path("id") id: String): Call<Void>
-    
+
     @POST("api/auth/resend-otp")
     fun resendOtp(@Body request: ResendOtpRequest): Call<Void>
-    
+
     @GET("api/auth/reset-password/{id}")
     fun forgotPassword(@Path("id") id: String): Call<Void>
-    
+
     @POST("api/auth/reset-password/{email}")
     fun resetPassword(
         @Path("email") email: String,
         @Body request: ResetPasswordRequest
     ): Call<Void>
-    
+
     @GET("api/auth/logout")
     fun logout(@Header("Authorization") token: String): Call<Void>
 
     @GET("api/account/me")
     fun getCurrentUser(@Header("Authorization") token: String): Call<UserProfileResponse>
 
-    // Must try products
+
     @GET("api/products/must-try")
     fun getMustTryProducts(): Call<List<ProductResponse>>
 
-    // Product detail
+
     @GET("api/products/id/{productId}")
     fun getProductDetail(@Path("productId") productId: String): Call<ProductDetailResponse>
 
-    // Products
+
     @GET("api/products")
     fun getProducts(
         @Query("page") page: Int = 0,
@@ -88,7 +86,7 @@ interface ApiService {
         @Query("sort") sort: String? = null
     ): Call<ProductListResponse>
 
-    // Legacy overload for admin filter (params + pageable JSON strings)
+
     @GET("api/products")
     fun getProducts(
         @Query("params") params: String,
@@ -124,7 +122,7 @@ interface ApiService {
     @DELETE("api/products/id/{productId}")
     fun deleteProduct(@Path("productId") productId: String): Call<ResponseBody>
 
-    // Categories
+
     @GET("api/categories")
     fun getCategories(): Call<CategoryListResponse>
 
@@ -143,7 +141,7 @@ interface ApiService {
     @DELETE("api/categories/{id}")
     fun deleteCategory(@Path("id") categoryId: String): Call<ResponseBody>
 
-    // Order endpoints
+
     @POST("api/order")
     fun createOrder(
         @Header("Authorization") token: String,
@@ -162,11 +160,11 @@ interface ApiService {
         @Body request: UpdateOrderStatusRequest
     ): Call<CreateOrderResponse>
 
-    // Payment endpoints
+
     @POST("api/payment/vnpay")
     fun payWithVnpay(@Body paymentRequest: PaymentRequest): Call<PaymentResponse>
 
-    // Voucher endpoints
+
     @GET("api/vouchers")
     fun getVouchers(): Call<List<VoucherResponse>>
 

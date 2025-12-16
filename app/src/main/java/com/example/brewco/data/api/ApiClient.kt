@@ -1,6 +1,7 @@
 package com.example.brewco.data.api
 
 import android.util.Log
+import com.example.brewco.BuildConfig
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonDeserializationContext
@@ -21,54 +22,44 @@ import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import java.util.concurrent.TimeUnit
 
-/**
- * ApiClient giữ nguyên cấu hình như bản gốc BrewCo_old để bảo đảm 1:1.
- */
+
 object ApiClient {
 
     private const val BASE_URL = "https://e5d067a06378.ngrok-free.app"
 
+
+    private const val CONNECT_TIMEOUT_SEC = 15L
+    private const val READ_TIMEOUT_SEC = 30L
+    private const val WRITE_TIMEOUT_SEC = 30L
+
     private val gson: Gson by lazy {
-        val dateFormat = SimpleDateFormat(
-            "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
-            Locale.getDefault()
-        )
-        dateFormat.timeZone = TimeZone.getTimeZone("UTC")
+        val dateDeserializer = JsonDeserializer<Date> { json, _, _ -> parseServerDateOrNull(json?.asString) }
 
-        val dateDeserializer = JsonDeserializer<Date> { json, _, _ ->
-            try {
-                dateFormat.parse(json.asString)
-            } catch (e: Exception) {
-                Log.e("ApiClient", "Date parsing error", e)
-                null
-            }
-        }
-
-        val dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME
         val localDateTimeAdapter = object : JsonSerializer<LocalDateTime>, JsonDeserializer<LocalDateTime> {
+            private val formatter = DateTimeFormatter.ISO_DATE_TIME
+
             override fun serialize(
                 src: LocalDateTime?,
                 typeOfSrc: Type?,
                 context: JsonSerializationContext?
-            ): JsonElement {
-                return if (src == null) {
-                    JsonNull.INSTANCE
-                } else {
-                    JsonPrimitive(src.format(dateTimeFormatter))
-                }
-            }
+            ): JsonElement = if (src == null) JsonNull.INSTANCE else JsonPrimitive(src.format(formatter))
 
             override fun deserialize(
                 json: JsonElement?,
                 typeOfT: Type?,
                 context: JsonDeserializationContext?
             ): LocalDateTime? {
-                if (json == null || json.asString.isEmpty()) return null
+                val raw = json?.asString?.trim().orEmpty()
+                if (raw.isEmpty()) return null
+
+
+                val normalized = raw.removeSuffix("Z")
                 return try {
-                    LocalDateTime.parse(json.asString, dateTimeFormatter)
+                    LocalDateTime.parse(normalized, formatter)
                 } catch (e: Exception) {
-                    Log.e("ApiClient", "LocalDateTime parsing error", e)
+                    Log.e("ApiClient", "LocalDateTime parsing error: $raw", e)
                     null
                 }
             }
@@ -81,10 +72,20 @@ object ApiClient {
     }
 
     val apiService: ApiService by lazy {
+        val logLevel = if (BuildConfig.DEBUG) {
+            HttpLoggingInterceptor.Level.BODY
+        } else {
+
+            HttpLoggingInterceptor.Level.NONE
+        }
+
         val client = OkHttpClient.Builder()
             .addInterceptor(HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
+                level = logLevel
             })
+            .connectTimeout(CONNECT_TIMEOUT_SEC, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_SEC, TimeUnit.SECONDS)
+            .writeTimeout(WRITE_TIMEOUT_SEC, TimeUnit.SECONDS)
             .build()
 
         Retrofit.Builder()
@@ -93,5 +94,32 @@ object ApiClient {
             .client(client)
             .build()
             .create(ApiService::class.java)
+    }
+
+
+    private fun parseServerDateOrNull(raw: String?): Date? {
+        val value = raw?.trim().orEmpty()
+        if (value.isEmpty()) return null
+
+        val candidates = listOf(
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd HH:mm:ss"
+        )
+
+        for (pattern in candidates) {
+            try {
+                val fmt = SimpleDateFormat(pattern, Locale.getDefault()).apply {
+                    timeZone = TimeZone.getTimeZone("UTC")
+                }
+                return fmt.parse(value.removeSuffix("Z"))
+            } catch (_: Exception) {
+
+            }
+        }
+
+        Log.w("ApiClient", "Không parse được Date từ server: $value")
+        return null
     }
 }

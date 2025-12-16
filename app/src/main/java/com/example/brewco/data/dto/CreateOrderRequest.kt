@@ -1,5 +1,8 @@
 package com.example.brewco.data.dto
 
+import androidx.annotation.Keep
+
+@Keep
 data class CreateOrderRequest(
     val address: String = "",
     val fullName: String,
@@ -10,7 +13,8 @@ data class CreateOrderRequest(
     val userId: String
 )
 
+@Keep
 data class OrderItemRequest(
     val id: String,
     val amount: Int = 1
-) 
+)

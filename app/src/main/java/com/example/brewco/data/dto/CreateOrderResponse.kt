@@ -1,5 +1,8 @@
 package com.example.brewco.data.dto
 
+import androidx.annotation.Keep
+
+@Keep
 data class CreateOrderResponse(
     val error: Boolean,
     val statusCode: Int,
@@ -7,6 +10,7 @@ data class CreateOrderResponse(
     val message: String
 )
 
+@Keep
 data class CreatedOrderData(
     val id: String,
     val paymentMethod: String?,
@@ -15,6 +19,7 @@ data class CreatedOrderData(
     val orderItemList: List<CreatedOrderItem> = emptyList()
 )
 
+@Keep
 data class CreatedOrderItem(
     val id: String,
     val amount: Int,
@@ -22,4 +27,4 @@ data class CreatedOrderItem(
     val price: Int?,
     val description: String?,
     val imageUrl: String?
-) 
+)

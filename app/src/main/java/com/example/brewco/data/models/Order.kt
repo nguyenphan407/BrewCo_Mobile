@@ -1,5 +1,8 @@
 package com.example.brewco.data.models
 
+import androidx.annotation.Keep
+
+@Keep
 data class Order(
     val id: Int,
     val customerName: String,
@@ -10,6 +13,7 @@ data class Order(
     val status: OrderStatus = OrderStatus.PENDING
 )
 
+@Keep
 data class OrderItem(
     val productId: String,
     val productName: String,
@@ -18,6 +22,7 @@ data class OrderItem(
     val note: String = ""
 )
 
+@Keep
 enum class OrderStatus {
     PENDING,
     CONFIRMED,
@@ -25,4 +30,4 @@ enum class OrderStatus {
     READY,
     COMPLETED,
     CANCELLED
-} 
+}

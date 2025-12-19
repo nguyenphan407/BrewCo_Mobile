@@ -1,7 +1,10 @@
 package com.example.brewco.data.dto
 
+import androidx.annotation.Keep
+
 import com.google.gson.annotations.SerializedName
 
+@Keep
 data class ProductListResponse(
     @SerializedName("error")
     val error: Boolean,
@@ -13,6 +16,7 @@ data class ProductListResponse(
     val message: String
 )
 
+@Keep
 data class ProductPageData(
     @SerializedName("page")
     val page: Int,

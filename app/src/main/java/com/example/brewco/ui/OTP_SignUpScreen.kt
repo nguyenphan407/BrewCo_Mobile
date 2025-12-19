@@ -37,30 +37,30 @@ fun OTP_SignUpScreen(
     onVerifyOtp: (String) -> Unit = {}
 ) {
     var otpValue by remember { mutableStateOf("") }
-    var timeRemaining by remember { mutableStateOf(120) } // 2 phút = 120 giây
+    var timeRemaining by remember { mutableStateOf(120) }
     var isResendEnabled by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
-    
+
     val context = LocalContext.current
-    
-    // Đếm ngược thời gian
+
+
     LaunchedEffect(key1 = true) {
         while (timeRemaining > 0) {
-            delay(1000) // Đợi 1 giây
+            delay(1000)
             timeRemaining--
         }
         isResendEnabled = true
     }
-    
-    // Format thời gian còn lại dạng mm:ss
+
+
     val minutes = timeRemaining / 60
     val seconds = timeRemaining % 60
     val timeString = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
-    
-    // Hàm xử lý khi nhấn xác nhận OTP (giữ nguyên logic API cũ)
+
+
     val handleVerifyOtp = {
         isLoading = true
-        
+
         ApiClient.apiService.verifyOtp(otpValue).enqueue(object : Callback<Void> {
             override fun onResponse(call: Call<Void>, response: Response<Void>) {
                 isLoading = false
@@ -71,44 +71,44 @@ fun OTP_SignUpScreen(
                     Toast.makeText(context, "Mã OTP không đúng hoặc đã hết hạn", Toast.LENGTH_SHORT).show()
                 }
             }
-            
+
             override fun onFailure(call: Call<Void>, t: Throwable) {
                 isLoading = false
                 Toast.makeText(context, "Lỗi kết nối: ${t.message}", Toast.LENGTH_SHORT).show()
             }
         })
     }
-    
-    // Hàm gửi lại OTP (giữ nguyên logic API cũ)
+
+
     val handleResendOtp = {
         if (isResendEnabled || timeRemaining <= 0) {
             val request = ResendOtpRequest(email = emailAddress)
-            
+
             ApiClient.apiService.resendOtp(request).enqueue(object : Callback<Void> {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) {
                     if (response.isSuccessful) {
                         Toast.makeText(context, "Đã gửi lại mã OTP", Toast.LENGTH_SHORT).show()
-                        timeRemaining = 120 // Reset thời gian đếm ngược
+                        timeRemaining = 120
                         isResendEnabled = false
                     } else {
                         Toast.makeText(context, "Không thể gửi lại mã OTP: ${response.code()}", Toast.LENGTH_SHORT).show()
                     }
                 }
-                
+
                 override fun onFailure(call: Call<Void>, t: Throwable) {
                     Toast.makeText(context, "Lỗi kết nối: ${t.message}", Toast.LENGTH_SHORT).show()
                 }
             })
         }
     }
-    
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(CafeLoginBackground),
-        contentAlignment = Alignment.Center // Căn chỉnh tất cả về trung tâm
+        contentAlignment = Alignment.Center
     ) {
-        // Nút đóng (X) ở góc trên bên phải
+
         Text(
             text = "×",
             color = Color.Black,
@@ -119,16 +119,16 @@ fun OTP_SignUpScreen(
                 .clickable(onClick = onBackClick)
                 .padding(24.dp)
         )
-        
-        // Hiển thị loading khi đang xử lý API
+
+
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
                 color = CafeBrown
             )
         }
-        
-        // Nội dung chính - căn giữa màn hình
+
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -136,7 +136,7 @@ fun OTP_SignUpScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Tiêu đề xác nhận OTP (UI Highlands)
+
             Text(
                 text = "Xác nhận Mã OTP",
                 color = HighlandRed,
@@ -163,20 +163,20 @@ fun OTP_SignUpScreen(
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
-            // Ô nhập OTP 6 số
+
+
             OtpTextField(
                 otpText = otpValue,
                 onOtpTextChange = { value, isFilled ->
                     otpValue = value
                 }
             )
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
-            // Thông báo không nhận được mã + gửi lại
+
+
             Text(
                 text = "Thời gian còn lại: $timeString",
                 color = if (timeRemaining > 0) HighlandText else HighlandRed,
@@ -205,10 +205,10 @@ fun OTP_SignUpScreen(
                     }
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(40.dp))
-            
-            // Nút xác nhận
+
+
             Button(
                 onClick = { handleVerifyOtp() },
                 modifier = Modifier
@@ -237,4 +237,4 @@ fun OTP_SignUpScreenPreview() {
     BrewCoTheme {
         OTP_SignUpScreen()
     }
-} 
+}

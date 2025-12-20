@@ -49,13 +49,13 @@ fun ForgotPasswordScreen(
     var emailAddress by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(CafeLoginBackground)
     ) {
-        // Phần trên với nền đỏ + ảnh như UI mới
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -74,7 +74,7 @@ fun ForgotPasswordScreen(
             )
         }
 
-        // Phần form Highlands
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -166,7 +166,7 @@ fun ForgotPasswordScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Nút xác nhận: giữ nguyên logic API cũ
+
                 Button(
                     onClick = {
                         if (emailAddress.isNotEmpty()) {
@@ -262,4 +262,4 @@ fun ForgotPasswordScreenPreview() {
     BrewCoTheme {
         ForgotPasswordScreen()
     }
-} 
+}

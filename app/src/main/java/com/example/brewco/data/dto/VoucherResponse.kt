@@ -1,10 +1,13 @@
 package com.example.brewco.data.dto
 
+import androidx.annotation.Keep
+
 import com.google.gson.annotations.SerializedName
 import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.util.Locale
 
+@Keep
 data class VoucherDTO(
     val id: String,
     val code: String? = null,
@@ -47,11 +50,10 @@ data class VoucherDTO(
         }
     }
 
-    fun getVoucherTitle(): String {
-        return title ?: code ?: "Voucher"
-    }
+    fun getVoucherTitle(): String= title ?: code ?: "Voucher"
 }
 
+@Keep
 data class VoucherResponse(
     val id: String,
     val discountPercentage: Double,

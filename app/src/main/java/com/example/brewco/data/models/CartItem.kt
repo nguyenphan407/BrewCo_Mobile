@@ -1,5 +1,8 @@
 package com.example.brewco.data.models
 
+import androidx.annotation.Keep
+
+@Keep
 data class CartItem(
     val id: String,
     val productName: String,

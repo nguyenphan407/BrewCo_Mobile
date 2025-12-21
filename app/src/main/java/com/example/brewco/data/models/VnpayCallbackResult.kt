@@ -1,5 +1,8 @@
 package com.example.brewco.data.models
 
+import androidx.annotation.Keep
+
+@Keep
 data class VnpayCallbackResult(
     val responseCode: String?,
     val orderInfo: String?,

@@ -69,7 +69,6 @@ import retrofit2.Callback
 import retrofit2.Response
 
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +78,7 @@ fun AdminScreen(
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("DASHBOARD", "SẢN PHẨM", "VOUCHER", "DANH MỤC")
 
-    // Dialog states
+
     var showCategoryDialog by remember { mutableStateOf(false) }
     var showProductDialog by remember { mutableStateOf(false) }
     var showVoucherDialog by remember { mutableStateOf(false) }
@@ -110,13 +109,13 @@ fun AdminScreen(
             )
         },
         floatingActionButton = {
-            if (selectedTabIndex != 0) { // Không hiển thị FAB ở tab Dashboard
+            if (selectedTabIndex != 0) {
                 FloatingActionButton(
                     onClick = {
                         when (selectedTabIndex) {
-                            1 -> showProductDialog = true // Tab Sản phẩm
-                            2 -> showVoucherDialog = true // Tab Voucher
-                            3 -> showCategoryDialog = true // Tab Danh mục
+                            1 -> showProductDialog = true
+                            2 -> showVoucherDialog = true
+                            3 -> showCategoryDialog = true
                         }
                     },
                     containerColor = CafeButtonBackground,
@@ -137,7 +136,7 @@ fun AdminScreen(
                 .fillMaxSize()
                 .background(CafeLoginBackground)
         ) {
-            // Tab Bar
+
             ScrollableTabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = CafeBeige,
@@ -166,7 +165,7 @@ fun AdminScreen(
                 }
             }
 
-            // Nội dung tab
+
             when (selectedTabIndex) {
                 0 -> DashboardContent()
                 1 -> ProductManagementContent(
@@ -196,13 +195,13 @@ data class DashboardMetrics(
 @Composable
 fun DashboardContent() {
     val context = LocalContext.current
-    val sharedPreferences = remember { context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE) }
+    val authManager = remember { AuthManager.getInstance(context) }
     var metrics by remember { mutableStateOf(DashboardMetrics()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     fun refreshDashboard() {
-        val token = sharedPreferences.getString("auth_token", null)
+        val token = authManager.getAuthToken()
         if (token.isNullOrBlank()) {
             metrics = DashboardMetrics()
             isLoading = false
@@ -512,7 +511,7 @@ fun VoucherManagementContent(
     onAddDialogDismiss: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val sharedPreferences = remember { context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE) }
+    val authManager = remember { AuthManager.getInstance(context) }
 
     var vouchers by remember { mutableStateOf<List<VoucherResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
@@ -601,7 +600,7 @@ fun VoucherManagementContent(
     }
 
     fun resolveToken(): String? {
-        val token = sharedPreferences.getString("auth_token", null)
+        val token = authManager.getAuthToken()
         return if (token.isNullOrBlank()) {
             errorMessage = "Vui lòng đăng nhập admin để thao tác voucher."
             null
@@ -1072,7 +1071,7 @@ fun CategoryItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Tên danh mục
+
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -1095,7 +1094,7 @@ fun CategoryItem(
                 }
             }
 
-            // Nút chỉnh sửa
+
             IconButton(
                 onClick = onEditClick,
                 modifier = Modifier
@@ -1115,7 +1114,7 @@ fun CategoryItem(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Nút xóa
+
             IconButton(
                 onClick = onDeleteClick,
                 modifier = Modifier
@@ -1277,7 +1276,7 @@ fun ProductItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Hình ảnh sản phẩm
+
             Box(
                 modifier = Modifier
                     .size(70.dp)
@@ -1294,7 +1293,7 @@ fun ProductItem(
                 )
             }
 
-            // Thông tin sản phẩm
+
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -1318,7 +1317,7 @@ fun ProductItem(
                 )
             }
 
-            // Nút chỉnh sửa
+
             IconButton(
                 onClick = onEditClick,
                 modifier = Modifier
@@ -1338,7 +1337,7 @@ fun ProductItem(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Nút xóa
+
             IconButton(
                 onClick = onDeleteClick,
                 modifier = Modifier

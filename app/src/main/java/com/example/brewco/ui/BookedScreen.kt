@@ -83,7 +83,7 @@ data class CategoryItem(
     val id: String,
     val title: String,
     val imageRes: Int,
-    val categoryId: Int? = null // Add categoryId from API
+    val categoryId: Int? = null
 )
 
 data class Product(
@@ -112,16 +112,16 @@ fun BookedScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showCategorySheet by remember { mutableStateOf(false) }
 
-    // Collect UI state from ViewModel
+
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    // Bottom sheet state
+
     val sheetState = rememberModalBottomSheetState()
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
-    // Build dynamic categories from API or use fallback
+
     val categories = remember(uiState.categories) {
         if (uiState.categories.isNotEmpty()) {
             uiState.categories.map { apiCategory ->
@@ -144,12 +144,12 @@ fun BookedScreen(
         }
     }
 
-    // Refs to sections for scrolling
+
     val sectionRefs = remember {
         mutableMapOf<String, MutableState<Int>>()
     }
 
-    // Initialize section refs dynamically based on categories
+
     LaunchedEffect(categories) {
         categories.forEach { category ->
             if (!sectionRefs.containsKey(category.id)) {
@@ -158,7 +158,7 @@ fun BookedScreen(
         }
     }
 
-    // Handle search
+
     LaunchedEffect(searchQuery) {
         if (searchQuery.isNotBlank() && searchQuery.length >= 2) {
             viewModel.searchProducts(searchQuery)
@@ -167,7 +167,7 @@ fun BookedScreen(
         }
     }
 
-    // Show error message
+
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
             android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()

@@ -177,6 +177,8 @@ fun CartScreen(
                                         }
                                     },
                                     onRemove = { handleRemove(item) },
+                                    onIncrement = { MockCartStore.incrementQuantity(item.entryId) },
+                                    onDecrement = { MockCartStore.decrementQuantity(item.entryId) },
                                     isRemoving = removingEntryId == item.entryId
                                 )
                             }
@@ -297,6 +299,8 @@ private fun CartOrderItem(
     isSelected: Boolean,
     onSelectionChange: (Boolean) -> Unit,
     onRemove: () -> Unit,
+    onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
     isRemoving: Boolean
 ) {
     Card(
@@ -313,25 +317,30 @@ private fun CartOrderItem(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Checkbox(
+                checked = isSelected,
+                onCheckedChange = onSelectionChange
+            )
+
             Box(
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(70.dp)
                     .background(HighlandRed.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.coffee_beans),
                     contentDescription = "Product",
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(40.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = cartItem.productName,
-                    fontSize = 16.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = HighlandText,
                     maxLines = 2,
@@ -339,14 +348,8 @@ private fun CartOrderItem(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Kích cỡ: ${cartItem.size}",
-                    fontSize = 13.sp,
-                    color = HighlandText.copy(alpha = 0.7f)
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "SL: ${cartItem.quantity}",
-                    fontSize = 13.sp,
+                    text = "Size: ${cartItem.size}",
+                    fontSize = 12.sp,
                     color = HighlandText.copy(alpha = 0.7f)
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -361,11 +364,12 @@ private fun CartOrderItem(
             Column(horizontalAlignment = Alignment.End) {
                 IconButton(
                     onClick = onRemove,
-                    enabled = !isRemoving
+                    enabled = !isRemoving,
+                    modifier = Modifier.size(32.dp)
                 ) {
                     if (isRemoving) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(16.dp),
                             strokeWidth = 2.dp,
                             color = HighlandRed
                         )
@@ -373,14 +377,57 @@ private fun CartOrderItem(
                         Icon(
                             imageVector = Icons.Filled.Delete,
                             contentDescription = "Xóa sản phẩm",
-                            tint = HighlandRed
+                            tint = HighlandRed,
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-                Checkbox(
-                    checked = isSelected,
-                    onCheckedChange = onSelectionChange
-                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(HighlandRed.copy(alpha = 0.1f), RoundedCornerShape(6.dp))
+                            .clickable { onDecrement() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "−",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = HighlandRed
+                        )
+                    }
+                    
+                    Text(
+                        text = "${cartItem.quantity}",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = HighlandText,
+                        modifier = Modifier.width(24.dp),
+                        textAlign = TextAlign.Center
+                    )
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .background(HighlandRed, RoundedCornerShape(6.dp))
+                            .clickable { onIncrement() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "+",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = HighlandWhite
+                        )
+                    }
+                }
             }
         }
     }

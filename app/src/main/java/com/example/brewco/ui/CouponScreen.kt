@@ -137,7 +137,7 @@ fun CouponScreen(
     onNavigationItemClick: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
-    val sharedPreferences = remember { context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE) }
+    val authManager = remember { AuthManager.getInstance(context) }
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Voucher của tôi", "Đổi Bean", "Lịch sử")
     val snackbarHostState = remember { SnackbarHostState() }
@@ -150,20 +150,20 @@ fun CouponScreen(
     var historyItems by remember { mutableStateOf<List<HistoryItem>>(emptyList()) }
     var beanBalance by remember { mutableStateOf(BeanBalance(current = 0, expiringSoon = 0)) }
 
-    // Danh sách hình ảnh voucher để xoay vòng
+
     val voucherImages = listOf(R.drawable.vc_1, R.drawable.vc_2, R.drawable.vc_3)
 
     LaunchedEffect(Unit) {
         isLoading = true
-        val token = sharedPreferences.getString("auth_token", null)
+        val token = authManager.getAuthToken()
         val ordersCall = token?.let { ApiClient.apiService.getMyOrders("Bearer $it") }
         if (ordersCall == null) {
             Log.e("CouponScreen", "Missing auth token for getMyOrders")
         }
-        // Lấy dữ liệu voucher
+
         val vouchersCall = ApiClient.apiService.getVouchers()
 
-        // Xử lý đơn hàng
+
         ordersCall?.enqueue(object : Callback<OrderResponse> {
             override fun onResponse(call: Call<OrderResponse>, response: Response<OrderResponse>) {
                 if (!response.isSuccessful) {
@@ -172,7 +172,7 @@ fun CouponScreen(
                 }
                 val orders = response.body()?.data?.content.orEmpty()
 
-                // Quy đổi Bean từ tổng tiền (1 Bean / 1.000đ)
+
                 val beanEarned = orders.sumOf { it.totalPrice } / 1000
                 beanBalance = beanBalance.copy(current = beanEarned)
 
@@ -195,7 +195,7 @@ fun CouponScreen(
             }
         })
 
-        // Xử lý voucher
+
         vouchersCall.enqueue(object : Callback<List<VoucherResponse>> {
             override fun onResponse(
                 call: Call<List<VoucherResponse>>,
@@ -328,14 +328,14 @@ fun CouponScreen(
                     when (tab) {
                         0 -> VoucherTab(
                             vouchers = vouchers,
-                            onUseVoucher = { /* demo */ },
+                            onUseVoucher = {  },
                             isProcessing = isProcessing,
                             paddingValues = paddingValues
                         )
                         1 -> ExchangeBeanTab(
                             beanBalance = beanBalance,
                             exchangeItems = exchangeItems,
-                            onExchange = { _, _ -> /* demo */ },
+                            onExchange = { _, _ ->  },
                             isProcessing = isProcessing,
                             paddingValues = paddingValues
                         )
@@ -693,7 +693,7 @@ fun ModernVoucherCard(
             }
 
             Column(modifier = Modifier.padding(16.dp)) {
-                // FREESHIP badge
+
                 if (voucher.hasFreeship) {
                     Box(
                         modifier = Modifier
@@ -710,7 +710,7 @@ fun ModernVoucherCard(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                // Tiêu đề
+
                 Text(
                     text = voucher.titleText,
                     fontSize = 15.sp,
@@ -721,7 +721,7 @@ fun ModernVoucherCard(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Mô tả (nếu có)
+
                 voucher.description?.let {
                     Text(
                         text = it,
@@ -732,7 +732,7 @@ fun ModernVoucherCard(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                // Mã voucher (nếu có)
+
                 voucher.code?.let {
                     Row(
                         modifier = Modifier
@@ -758,12 +758,12 @@ fun ModernVoucherCard(
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                // Điều kiện áp dụng
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Đơn hàng tối thiểu
+
                     if (voucher.minOrderAmount != null && voucher.minOrderAmount > 0) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -780,7 +780,7 @@ fun ModernVoucherCard(
                         }
                     }
 
-                    // Giảm giá tối đa
+
                     if (voucher.maxDiscountAmount != null && voucher.maxDiscountAmount > 0) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -797,7 +797,7 @@ fun ModernVoucherCard(
                         }
                     }
 
-                    // Số lượng còn lại
+
                     if (voucher.quantity != null && voucher.used != null) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -817,7 +817,7 @@ fun ModernVoucherCard(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Hạn sử dụng
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

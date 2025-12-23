@@ -77,46 +77,44 @@ fun DifferScreen(
     onNavigateToNoti: () -> Unit = {}
 ) {
     val context = LocalContext.current
-    val sharedPreferences = remember(context) {
-        context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-    }
     val authManager = remember { AuthManager.getInstance(context) }
 
     var orderCount by remember { mutableStateOf(0) }
     var beanCount by remember { mutableStateOf(0) }
     val voucherCount = 0
-//    var fullName by remember { mutableStateOf(authManager.getSavedFullName() ?: "Người dùng") }
-    var fullName by remember { mutableStateOf("Người dùng") }
+    var fullName by remember { mutableStateOf(authManager.getSavedFullName() ?: "Người dùng") }
     var email by remember { mutableStateOf(authManager.getSavedEmail().ifEmpty { "—" }) }
 
-    // Giữ logic logout cũ: có token thì gọi API logout
+
     val handleLogout = {
-        val token = sharedPreferences.getString("auth_token", null)
+        val token = authManager.getAuthToken()
         if (token != null) {
             ApiClient.apiService.logout("Bearer $token").enqueue(object : Callback<Void> {
                 override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                    authManager.logout()
                     if (response.isSuccessful) {
-                        sharedPreferences.edit().clear().apply()
                         Toast.makeText(context, "Đăng xuất thành công", Toast.LENGTH_SHORT).show()
-                        onLogoutClick()
                     } else {
-                        Toast.makeText(context, "Đăng xuất thất bại: ${response.code()}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Đã đăng xuất khỏi thiết bị", Toast.LENGTH_SHORT).show()
                     }
+                    onLogoutClick()
                 }
 
                 override fun onFailure(call: Call<Void>, t: Throwable) {
-                    Toast.makeText(context, "Lỗi kết nối: ${t.message}", Toast.LENGTH_SHORT).show()
+                    authManager.logout()
+                    Toast.makeText(context, "Đã đăng xuất (offline)", Toast.LENGTH_SHORT).show()
+                    onLogoutClick()
                 }
             })
         } else {
-            Toast.makeText(context, "Bạn chưa đăng nhập", Toast.LENGTH_SHORT).show()
+            authManager.logout()
             onLogoutClick()
         }
     }
 
-    // Không mock: lấy số đơn + tính bean từ orders (tạm như CouponScreen)
+
     LaunchedEffect(Unit) {
-        val token = sharedPreferences.getString("auth_token", null)
+        val token = authManager.getAuthToken()
         if (token.isNullOrBlank()) {
             Log.w("DifferScreen", "Missing auth token for orders")
             return@LaunchedEffect
@@ -136,11 +134,7 @@ fun DifferScreen(
     }
 
     LaunchedEffect(Unit) {
-        val token = sharedPreferences.getString("auth_token", null)
-        Log.e(
-            "tokentest",
-            "Error body = ${token}"
-        )
+        val token = authManager.getAuthToken()
         if (token.isNullOrBlank()) {
             Log.w("DifferScreen", "Missing auth token")
             return@LaunchedEffect
@@ -156,19 +150,11 @@ fun DifferScreen(
                         Toast.makeText(context, "Không thể tải thông tin người dùng", Toast.LENGTH_SHORT).show()
                         return
                     }
-                    Log.e(
-                        "DifferScreen",
-                        "Error body = ${response.body()}"
-                    )
                     val profile = response.body() ?: return
 
                     fullName = profile.fullName
                     email = profile.email
                     authManager.saveUserInfo(profile.id, profile.fullName, profile.phoneNumber.orEmpty())
-                    sharedPreferences.edit()
-                        .putString("full_name", profile.fullName)
-                        .putString("email", profile.email)
-                        .apply()
                 }
 
                 override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
@@ -326,37 +312,37 @@ fun DifferScreen(
                         onClick = onHistoryClick
                     )
 
-//                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color.LightGray.copy(alpha = 0.3f))
-//
-//                    ModernMenuItem(
-//                        iconResId = R.drawable.ic_diachi,
-//                        title = "Địa chỉ đã lưu",
-//                        onClick = { /* TODO */ }
-//                    )
-//
-//                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color.LightGray.copy(alpha = 0.3f))
-//
-//                    ModernMenuItem(
-//                        iconResId = R.drawable.ic_danhgiadonhang,
-//                        title = "Đánh giá đơn hàng",
-//                        onClick = { /* TODO */ }
-//                    )
-//
-//                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color.LightGray.copy(alpha = 0.3f))
-//
-//                    ModernMenuItem(
-//                        iconResId = R.drawable.ic_lienhe,
-//                        title = "Liên hệ và góp ý",
-//                        onClick = { /* TODO */ }
-//                    )
-//
-//                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = Color.LightGray.copy(alpha = 0.3f))
-//
-//                    ModernMenuItem(
-//                        iconResId = R.drawable.ic_caidat,
-//                        title = "Cài đặt",
-//                        onClick = { /* TODO */ }
-//                    )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 }
             }
 
@@ -471,5 +457,3 @@ fun DifferScreenPreview() {
         DifferScreen()
     }
 }
-
-

@@ -48,9 +48,6 @@ fun LoginScreen(
 ) {
     val context = LocalContext.current
     val authManager = remember { AuthManager.getInstance(context) }
-    val authPreferences = remember(context) {
-        context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-    }
 
     fun fetchAndCacheProfile(token: String, onComplete: () -> Unit) {
         ApiClient.apiService.getCurrentUser("Bearer $token")
@@ -67,11 +64,6 @@ fun LoginScreen(
                                 fullName = profile.fullName,
                                 phone = profile.phoneNumber.orEmpty()
                             )
-                            authPreferences.edit()
-                                .putString("user_id", profile.id)
-                                .putString("full_name", profile.fullName)
-                                .putString("email", profile.email)
-                                .apply()
                         }
                     } else {
                         Toast.makeText(
@@ -94,7 +86,7 @@ fun LoginScreen(
             })
     }
 
-    // Lấy dữ liệu đã lưu (logic cũ)
+
     var email by remember { mutableStateOf(authManager.getSavedEmail()) }
     var password by remember { mutableStateOf(authManager.getSavedPassword()) }
     var rememberMe by remember { mutableStateOf(authManager.isRememberMeEnabled()) }
@@ -107,7 +99,7 @@ fun LoginScreen(
             .fillMaxSize()
             .background(HighlandWhite)
     ) {
-        // Phần trên với nền đỏ Highlands + hình
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -126,7 +118,7 @@ fun LoginScreen(
             )
         }
 
-        // Form đăng nhập Highlands
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -148,7 +140,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(top = 16.dp, bottom = 50.dp)
             )
 
-            // Ô nhập email
+
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -176,7 +168,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Ô nhập mật khẩu
+
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -206,7 +198,7 @@ fun LoginScreen(
                 }
             )
 
-            // Dòng Ghi nhớ tôi và Quên mật khẩu
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -255,13 +247,13 @@ fun LoginScreen(
                 )
             }
 
-            // Nút đăng nhập: giữ logic cũ (AuthManager + API) nhưng giao diện Highlands
+
             Button(
                 onClick = {
                     if (email.isNotEmpty() && password.isNotEmpty()) {
                         isLoading = true
 
-                        // Kiểm tra admin (đơn giản)
+
                         if (email == "gm.giaphu@gmail.com" && password == "admin") {
                             authManager.saveLoginCredentials(email, password, rememberMe)
 
@@ -299,10 +291,10 @@ fun LoginScreen(
                                     }
 
                                     authManager.saveLoginCredentials(email, password, rememberMe)
-                                    authPreferences.edit()
-                                        .putString("auth_token", token)
-                                        .putString("refresh_token", loginData.refreshToken.orEmpty())
-                                        .apply()
+                                    authManager.saveTokens(
+                                        accessToken = token,
+                                        refreshToken = loginData.refreshToken
+                                    )
 
                                     fetchAndCacheProfile(token) {
                                         isLoading = false
@@ -346,7 +338,7 @@ fun LoginScreen(
                 }
             }
 
-            // Phần đăng ký tài khoản mới
+
             Row(
                 modifier = Modifier.padding(top = 16.dp),
                 horizontalArrangement = Arrangement.Center,
@@ -377,4 +369,4 @@ fun LoginScreenPreview() {
     BrewCoTheme {
         LoginScreen()
     }
-} 
+}

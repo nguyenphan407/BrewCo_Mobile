@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.example.brewco.R
 import com.example.brewco.ui.theme.*
 
-/* -------------------- DATA -------------------- */
+
 
 data class OrderHistoryItem(
     val id: String,
@@ -36,7 +36,7 @@ enum class OrderStatus {
     CANCELLED
 }
 
-/* -------------------- MOCK DATA -------------------- */
+
 
 private val mockOrders = listOf(
     OrderHistoryItem(
@@ -67,14 +67,14 @@ private val mockOrders = listOf(
     )
 )
 
-/* -------------------- SCREEN -------------------- */
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
     onBackClick: () -> Unit = {}
 ) {
-    // ✅ MOCK DATA
+
     val orderHistory = remember {
         listOf(
             OrderHistoryItem(
@@ -168,7 +168,7 @@ private fun OrderList(
     }
 }
 
-/* -------------------- CARD -------------------- */
+
 
 @Composable
 fun OrderHistoryCard(order: OrderHistoryItem) {
@@ -277,7 +277,7 @@ fun OrderHistoryCard(order: OrderHistoryItem) {
 }
 
 
-/* -------------------- PREVIEW -------------------- */
+
 
 @Preview(showBackground = true)
 @Composable

@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-//import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,7 +41,7 @@ fun PaymentResultScreen(
     onBackHome: () -> Unit
 ) {
     val accentColor = if (result.isSuccess) Color(0xFF2E7D32) else Color(0xFFC62828)
-    val icon = if (result.isSuccess) Icons.Default.CheckCircle else Icons.Default.CheckCircle
+    val icon = if (result.isSuccess) Icons.Default.CheckCircle else Icons.Default.Error
     val title = if (result.isSuccess) "Thanh toán thành công" else "Thanh toán không thành công"
     val subtitle = if (result.isSuccess) {
         "Cafe Brewco đã nhận được thanh toán của bạn qua VNPAY. Đơn hàng sẽ được xử lý ngay."

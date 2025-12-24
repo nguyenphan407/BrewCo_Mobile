@@ -31,6 +31,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -91,6 +93,7 @@ fun PaymentScreen(
     var showSuccessDialog by remember { mutableStateOf(false) }
     var isProcessingPayment by remember { mutableStateOf(false) }
     var paymentError by remember { mutableStateOf<String?>(null) }
+    var orderNote by remember { mutableStateOf("") }
 
     val paymentMethodSheetState = rememberModalBottomSheetState()
     val voucherSheetState = rememberModalBottomSheetState()
@@ -260,6 +263,13 @@ fun PaymentScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            OrderNoteSection(
+                note = orderNote,
+                onNoteChange = { orderNote = it }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             CostSummarySection(
                 total = checkoutSummary.totalPrice,
                 discountAmount = discountAmount,
@@ -364,7 +374,7 @@ private fun DeliveryInfoSection(
                     fontWeight = FontWeight.Bold,
                     color = HighlandText
                 )
-                TextButton(onClick = { /* Mock screen */ }) {
+                TextButton(onClick = {  }) {
                     Text(text = "Thay đổi", color = HighlandRed, fontWeight = FontWeight.Bold)
                 }
             }
@@ -459,6 +469,44 @@ private fun SelectedProductsSection(items: List<CartItem>) {
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun OrderNoteSection(
+    note: String,
+    onNoteChange: (String) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = HighlandWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                text = "Ghi chú đơn hàng",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = HighlandText
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedTextField(
+                value = note,
+                onValueChange = onNoteChange,
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Ví dụ: Giao trước 12h, không ống hút nhựa...") },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = HighlandRed,
+                    unfocusedBorderColor = HighlandText.copy(alpha = 0.3f)
+                ),
+                minLines = 2,
+                maxLines = 4,
+                shape = RoundedCornerShape(12.dp)
+            )
         }
     }
 }

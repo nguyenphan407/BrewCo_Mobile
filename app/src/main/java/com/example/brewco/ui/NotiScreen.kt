@@ -30,25 +30,28 @@ import com.example.brewco.ui.theme.HighlandWhite
 fun NotiScreen(
     onBackClick: () -> Unit = {}
 ) {
-    // Sample notifications data
+
     val notifications = remember {
         listOf(
             NotificationItem(
+                id = "welcome",
                 title = "Chào bạn mới",
                 message = "Chào mừng bạn đã trở thành viên của Brew Co, chúng tôi luôn mong muốn mang đến cho bạn những trải nghiệm tốt nhất!",
                 timestamp = "10/04",
                 isRead = false
             ),
             NotificationItem(
-                title = "Chào bạn mới",
-                message = "Chào mừng bạn đã trở thành viên của Brew Co, chúng tôi luôn mong muốn mang đến cho bạn những trải nghiệm tốt nhất!",
-                timestamp = "10/04",
+                id = "voucher",
+                title = "Ưu đãi hôm nay",
+                message = "Ghé mục Voucher để đổi Bean và nhận ưu đãi cho đơn hàng tiếp theo nhé.",
+                timestamp = "11/04",
                 isRead = false
             ),
             NotificationItem(
-                title = "Chào bạn mới",
-                message = "Chào mừng bạn đã trở thành viên của Brew Co, chúng tôi luôn mong muốn mang đến cho bạn những trải nghiệm tốt nhất!",
-                timestamp = "10/04",
+                id = "shipping",
+                title = "Cập nhật giao hàng",
+                message = "Đơn hàng của bạn đang được chuẩn bị. Cảm ơn bạn đã chờ!",
+                timestamp = "12/04",
                 isRead = false
             )
         )
@@ -78,7 +81,7 @@ fun NotiScreen(
                     }
                 },
                 actions = {
-                    // Mark all as read button
+
                     IconButton(
                         onClick = {
                             notificationsList = notificationsList.map { it.copy(isRead = true) }
@@ -108,7 +111,7 @@ fun NotiScreen(
                     notification = notification,
                     onMarkAsRead = {
                         notificationsList = notificationsList.map {
-                            if (it == notification) it.copy(isRead = true) else it
+                            if (it.id == notification.id) it.copy(isRead = true) else it
                         }
                     }
                 )
@@ -189,8 +192,9 @@ fun NotificationCard(
 }
 
 data class NotificationItem(
+    val id: String,
     val title: String,
     val message: String,
     val timestamp: String,
     val isRead: Boolean = false
-) 
+)

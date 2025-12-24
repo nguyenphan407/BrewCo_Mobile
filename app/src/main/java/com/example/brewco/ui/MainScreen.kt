@@ -46,6 +46,7 @@ import com.example.brewco.ui.theme.BrewCoTheme
 import com.example.brewco.ui.theme.HighlandRed
 import com.example.brewco.ui.theme.HighlandText
 import com.example.brewco.ui.theme.HighlandWhite
+import com.example.brewco.utils.FormatUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -63,14 +64,11 @@ fun MainScreen(
     var userName by remember { mutableStateOf("") }
     val context = LocalContext.current
     val authManager = remember { AuthManager.getInstance(context) }
-    val sharedPreferences = remember(context) {
-        context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-    }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     fun loadUserProfile() {
-        val token = sharedPreferences.getString("auth_token", null)
+        val token = authManager.getAuthToken()
         if (token.isNullOrBlank()) {
             errorMessage = "Vui lòng đăng nhập lại"
             return
@@ -88,10 +86,6 @@ fun MainScreen(
                         if (profile != null) {
                             userName = profile.fullName
                             authManager.saveUserInfo(profile.id, profile.fullName, profile.phoneNumber.orEmpty())
-                            sharedPreferences.edit()
-                                .putString("full_name", profile.fullName)
-                                .putString("email", profile.email)
-                                .apply()
                             errorMessage = null
                         } else {
                             errorMessage = "Không có dữ liệu người dùng"
@@ -108,15 +102,15 @@ fun MainScreen(
             })
     }
 
-    // Giữ logic gọi API cũ
+
     val mustTryProducts = remember { mutableStateListOf<ProductResponse>() }
 
-    // Categories từ backend (GET /api/categories)
+
     var categoriesFromApi by remember { mutableStateOf<List<CategoryResponse>>(emptyList()) }
 
     LaunchedEffect(true) {
         loadUserProfile()
-        // Mặc định load "Tất cả" từ backend (server-side)
+
         ApiClient.apiService.getProductsPaginated(page = 0, size = 20, sort = null)
             .enqueue(object : Callback<ProductListResponse> {
                 override fun onResponse(
@@ -145,7 +139,7 @@ fun MainScreen(
             }
 
             override fun onFailure(call: Call<CategoryListResponse>, t: Throwable) {
-                // optional: silent fail; chip "Tất cả" vẫn hoạt động
+
             }
         })
     }
@@ -160,20 +154,20 @@ fun MainScreen(
         R.drawable.ad_7
     )
 
-    // Chip list: "Tất cả" + categories từ API. Selected theo categoryId (null = tất cả).
+
     val categoryChips = remember(categoriesFromApi) {
         listOf(null to "Tất cả") + categoriesFromApi.map { it.id to it.name }
     }
     var selectedCategoryId by remember { mutableStateOf<Int?>(null) }
 
-    // Filter server-side: list hiển thị chính là list đã load từ API theo categoryId
+
     val filteredProducts by remember(mustTryProducts) {
-        derivedStateOf { mustTryProducts.toList() } 
+        derivedStateOf { mustTryProducts.toList() }
     }
 
     Scaffold(
         topBar = {
-            // Header Highlands đơn giản
+
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = HighlandWhite,
@@ -260,7 +254,7 @@ fun MainScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Carousel quảng cáo Highlands
+
             val pagerState = rememberPagerState(pageCount = { adImages.size })
             val coroutineScope = rememberCoroutineScope()
 
@@ -326,7 +320,7 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Hàng icon dịch vụ (giao hàng, mang đi, đổi bean, ưu đãi)
+
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -365,7 +359,7 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Chip chọn danh mục (UI mới, chưa lọc dữ liệu – giữ logic đơn giản)
+
             LazyRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -379,7 +373,7 @@ fun MainScreen(
                         onClick = {
                             selectedCategoryId = id
                             if (id == null) {
-                                // "Tất cả" -> load danh sách chung
+
                                 ApiClient.apiService.getProductsPaginated(page = 0, size = 20, sort = null)
                                     .enqueue(object : Callback<ProductListResponse> {
                                         override fun onResponse(
@@ -396,7 +390,7 @@ fun MainScreen(
                                         }
                                     })
                             } else {
-                                // Category -> gọi API /api/products/category/{categoryId}
+
                                 ApiClient.apiService.getProductsByCategory(categoryId = id.toLong(), page = 0, size = 20)
                                     .enqueue(object : Callback<ProductListResponse> {
                                         override fun onResponse(
@@ -420,7 +414,7 @@ fun MainScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Danh sách "Món Mới Phải Thử" dùng dữ liệu API cũ nhưng layout Highlands
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -456,7 +450,7 @@ fun MainScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Hiển thị dạng grid 2 cột với AsyncImage từ API + filter theo category chip
+
                 val productChunks = filteredProducts.chunked(2)
                 if (filteredProducts.isEmpty()) {
                     Text(
@@ -475,7 +469,7 @@ fun MainScreen(
                             ProductItem(
                                 imageUrl = product.imageUrl,
                                 name = product.name,
-                                price = product.price.toString(),
+                                price = FormatUtils.formatPrice(product.price.toInt()),
                                 isNew = true,
                                 modifier = Modifier.weight(1f),
                                 onClick = { onNavigate("product/${product.id}") }
@@ -571,7 +565,7 @@ fun ProductItem(
                 modifier = Modifier
                     .size(36.dp)
                     .background(Color(0xFF74512D), CircleShape)
-                    .clickable { /* Add to cart */ },
+                    .clickable {  },
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -655,4 +649,4 @@ fun MainScreenPreview() {
     BrewCoTheme {
         MainScreen()
     }
-} 
+}

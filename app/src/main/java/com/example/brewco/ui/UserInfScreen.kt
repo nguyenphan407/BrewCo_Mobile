@@ -62,14 +62,11 @@ fun UserInfScreen(
 
     val context = LocalContext.current
     val authManager = remember { AuthManager.getInstance(context) }
-    val sharedPreferences = remember(context) {
-        context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
-    }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     fun loadUserProfile() {
-        val token = sharedPreferences.getString("auth_token", null)
+        val token = authManager.getAuthToken()
         if (token.isNullOrBlank()) {
             errorMessage = "Vui lòng đăng nhập lại"
             return
@@ -88,10 +85,6 @@ fun UserInfScreen(
                             name = profile.fullName
                             email = profile.email
                             authManager.saveUserInfo(profile.id, profile.fullName, profile.phoneNumber.orEmpty())
-                            sharedPreferences.edit()
-                                .putString("full_name", profile.fullName)
-                                .putString("email", profile.email)
-                                .apply()
                             errorMessage = null
                         } else {
                             errorMessage = "Không có dữ liệu người dùng"
@@ -108,7 +101,7 @@ fun UserInfScreen(
             })
     }
 
-    // Date picker
+
     val calendar = Calendar.getInstance()
     val currentYear = calendar.get(Calendar.YEAR)
     val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
@@ -128,7 +121,7 @@ fun UserInfScreen(
     )
     datePickerDialog.datePicker.maxDate = System.currentTimeMillis()
 
-    // Gender Dropdown
+
     var expandedGenderDropdown by remember { mutableStateOf(false) }
     val genderOptions = listOf("Nam", "Nữ", "Khác")
 
@@ -183,7 +176,7 @@ fun UserInfScreen(
                         .height(4.dp)
                 )
             }
-            // Profile Header Section
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -191,7 +184,7 @@ fun UserInfScreen(
                     .padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Avatar with badge
+
                 Box(contentAlignment = Alignment.BottomEnd) {
                     Box(
                         modifier = Modifier
@@ -235,7 +228,7 @@ fun UserInfScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Personal Info Section
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -355,7 +348,7 @@ fun UserInfScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Security Section
+
             Card(
                 modifier = Modifier
                     .fillMaxWidth()

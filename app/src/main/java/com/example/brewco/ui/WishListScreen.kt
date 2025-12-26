@@ -30,7 +30,7 @@ import com.example.brewco.ui.theme.HighlandWhite
 fun WishListScreen(
     onBackClick: () -> Unit = {}
 ) {
-    val wishlistManager = WishlistManager.getInstance()
+    val wishlistManager = remember { WishlistManager.getInstance() }
     val wishlistItems by wishlistManager.wishlistItems.collectAsState()
 
     Scaffold(
@@ -66,7 +66,7 @@ fun WishListScreen(
                 .background(HighlandWhite)
         ) {
             if (wishlistItems.isEmpty()) {
-                // Empty state với màu Highlands
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -96,7 +96,10 @@ fun WishListScreen(
                         .padding(horizontal = 16.dp)
                 ) {
                     items(wishlistItems) { item ->
-                        WishlistItemCard(item = item)
+                        WishlistItemCard(
+                            item = item,
+                            onRemove = { wishlistManager.removeItem(item.id) }
+                        )
                     }
                 }
             }
@@ -105,8 +108,10 @@ fun WishListScreen(
 }
 
 @Composable
-fun WishlistItemCard(item: WishlistItem) {
-    val wishlistManager = remember { WishlistManager.getInstance() }
+fun WishlistItemCard(
+    item: WishlistItem,
+    onRemove: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -123,7 +128,7 @@ fun WishlistItemCard(item: WishlistItem) {
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Product image
+
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -162,7 +167,7 @@ fun WishlistItemCard(item: WishlistItem) {
                 )
             }
 
-            IconButton(onClick = { wishlistManager.removeItem(item.id) }) {
+            IconButton(onClick = onRemove) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_love),
                     contentDescription = "Remove",

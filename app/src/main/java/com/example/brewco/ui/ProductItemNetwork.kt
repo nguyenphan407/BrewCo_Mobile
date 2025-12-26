@@ -16,6 +16,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.brewco.utils.FormatUtils
+import kotlin.math.roundToLong
 
 @Composable
 fun ProductItemNetwork(
@@ -39,6 +41,6 @@ fun ProductItemNetwork(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(name, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2)
-        Text("${price.toInt()}đ", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text(FormatUtils.formatPrice(price.roundToLong()), fontSize = 16.sp, fontWeight = FontWeight.Bold)
     }
 }

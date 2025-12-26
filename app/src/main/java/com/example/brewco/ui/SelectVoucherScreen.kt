@@ -109,7 +109,7 @@ fun SelectVoucherScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Voucher code input
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -129,9 +129,9 @@ fun SelectVoucherScreen(
                     ),
                     shape = RoundedCornerShape(8.dp)
                 )
-                
+
                 Button(
-                    onClick = { /* Handle apply voucher */ },
+                    onClick = {  },
                     modifier = Modifier.height(56.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF74512D)
@@ -142,7 +142,7 @@ fun SelectVoucherScreen(
                 }
             }
 
-            // Tabs
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -172,7 +172,7 @@ fun SelectVoucherScreen(
                             )
                         }
                     }
-                    
+
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -195,7 +195,7 @@ fun SelectVoucherScreen(
                 }
             }
 
-            // Content based on selected tab
+
             when (selectedTab) {
                 0 -> {
                     when {
@@ -255,13 +255,13 @@ fun SelectVoucherScreen(
                     }
                 }
                 1 -> {
-                    // Bean exchange tab
+
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
                     ) {
-                        // Current bean balance
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -280,7 +280,7 @@ fun SelectVoucherScreen(
                                     contentDescription = "Bean balance",
                                     modifier = Modifier.size(40.dp)
                                 )
-                                
+
                                 Column(
                                     modifier = Modifier
                                         .weight(1f)
@@ -360,7 +360,7 @@ fun VoucherCard(
                 .padding(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Voucher image
+
             Image(
                 painter = painterResource(id = image),
                 contentDescription = voucher.title,
@@ -369,7 +369,7 @@ fun VoucherCard(
                     .clip(RoundedCornerShape(8.dp))
             )
 
-            // Voucher details
+
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -380,7 +380,7 @@ fun VoucherCard(
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF543310)
                 )
-                
+
                 Text(
                     text = voucher.expiry,
                     fontSize = 12.sp,
@@ -389,7 +389,7 @@ fun VoucherCard(
             }
         }
     }
-} 
+}
 
 private val voucherDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 

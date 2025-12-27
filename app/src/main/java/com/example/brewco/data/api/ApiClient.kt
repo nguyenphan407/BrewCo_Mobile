@@ -27,9 +27,6 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
-    private const val BASE_URL = "https://e5d067a06378.ngrok-free.app"
-
-
     private const val CONNECT_TIMEOUT_SEC = 15L
     private const val READ_TIMEOUT_SEC = 30L
     private const val WRITE_TIMEOUT_SEC = 30L
@@ -89,7 +86,7 @@ object ApiClient {
             .build()
 
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BuildConfig.API_BASE_URL.ensureTrailingSlash())
             .addConverterFactory(GsonConverterFactory.create(gson))
             .client(client)
             .build()
@@ -122,4 +119,6 @@ object ApiClient {
         Log.w("ApiClient", "Không parse được Date từ server: $value")
         return null
     }
+
+    private fun String.ensureTrailingSlash(): String = if (endsWith("/")) this else "$this/"
 }

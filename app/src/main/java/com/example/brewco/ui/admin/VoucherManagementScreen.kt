@@ -55,6 +55,13 @@ fun VoucherDetailDialog(
 ) {
     if (!isVisible) return
 
+    val discountValue = formState.discountPercentage.trim().toDoubleOrNull()
+    val isValid = discountValue != null &&
+        discountValue > 0 &&
+        discountValue <= 100 &&
+        formState.startDate.isNotBlank() &&
+        formState.endDate.isNotBlank()
+
     Dialog(
         onDismissRequest = {
             if (!isSubmitting) {
@@ -176,7 +183,7 @@ fun VoucherDetailDialog(
 
                     Button(
                         onClick = onSave,
-                        enabled = !isSubmitting,
+                        enabled = !isSubmitting && isValid,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = CafeButtonBackground,
                             contentColor = CafeBeige

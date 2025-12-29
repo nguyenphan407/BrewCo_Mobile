@@ -4,8 +4,11 @@ import com.example.brewco.data.api.ApiClient
 import com.example.brewco.data.dto.ProductCreateRequest
 import com.example.brewco.data.dto.ProductDetailResponse
 import com.example.brewco.data.dto.ProductResponse
+import com.example.brewco.data.models.ErrorMapper
+import com.example.brewco.data.models.NetworkResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.Response
 
 class ProductRepository(private val apiClient: ApiClient = ApiClient) {
 
@@ -22,32 +25,55 @@ class ProductRepository(private val apiClient: ApiClient = ApiClient) {
         }
     }
 
-    private fun <T> requireSuccess(response: retrofit2.Response<T>, errorPrefix: String): T {
-        if (!response.isSuccessful) {
-            throw IllegalStateException("$errorPrefix: ${response.code()}")
+    private fun <T, R> executeRequest(
+        errorPrefix: String,
+        call: () -> Response<T>,
+        mapper: (T) -> R
+    ): NetworkResult<R> {
+        return try {
+            val response = call()
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null) {
+                    NetworkResult.Success(mapper(body))
+                } else {
+                    NetworkResult.Error(response.code(), "Phản hồi rỗng")
+                }
+            } else {
+                NetworkResult.Error(response.code(), ErrorMapper.toMessage(response.code()))
+            }
+        } catch (e: Exception) {
+            NetworkResult.Error(message = ErrorMapper.toMessage(throwable = e), throwable = e)
         }
-        return response.body() ?: throw IllegalStateException("Phản hồi rỗng")
     }
 
-    suspend fun getProducts(page: Int = 0, size: Int = DEFAULT_PAGE_SIZE): Result<List<ProductResponse>> = withContext(Dispatchers.IO) {
-        runCatching {
-            val response = apiClient.apiService.getProducts(page = page, size = size).execute()
-            requireSuccess(response, "Lỗi lấy sản phẩm").data?.items.orEmpty()
+    suspend fun getProducts(page: Int = 0, size: Int = DEFAULT_PAGE_SIZE): NetworkResult<List<ProductResponse>> =
+        withContext(Dispatchers.IO) {
+            executeRequest(
+                errorPrefix = "Lỗi lấy sản phẩm",
+                call = { apiClient.apiService.getProducts(page = page, size = size).execute() },
+                mapper = { it.data?.items.orEmpty() }
+            )
         }
+
+    suspend fun getProductById(productId: String): NetworkResult<ProductDetailResponse> = withContext(Dispatchers.IO) {
+        executeRequest(
+            errorPrefix = "Lỗi lấy chi tiết sản phẩm",
+            call = { apiClient.apiService.getProductDetail(productId).execute() },
+            mapper = { it }
+        )
     }
 
-    suspend fun getProductById(productId: String): Result<ProductDetailResponse> = withContext(Dispatchers.IO) {
-        runCatching {
-            val response = apiClient.apiService.getProductDetail(productId).execute()
-            requireSuccess(response, "Lỗi lấy chi tiết sản phẩm")
-        }
-    }
-
-    suspend fun getProductsByCategory(categoryId: Long, page: Int = 0, size: Int = DEFAULT_PAGE_SIZE): Result<List<ProductResponse>> = withContext(Dispatchers.IO) {
-        runCatching {
-            val response = apiClient.apiService.getProductsByCategory(categoryId, page, size).execute()
-            requireSuccess(response, "Lỗi lấy sản phẩm theo danh mục").data?.items.orEmpty()
-        }
+    suspend fun getProductsByCategory(
+        categoryId: Long,
+        page: Int = 0,
+        size: Int = DEFAULT_PAGE_SIZE
+    ): NetworkResult<List<ProductResponse>> = withContext(Dispatchers.IO) {
+        executeRequest(
+            errorPrefix = "Lỗi lấy sản phẩm theo danh mục",
+            call = { apiClient.apiService.getProductsByCategory(categoryId, page, size).execute() },
+            mapper = { it.data?.items.orEmpty() }
+        )
     }
 
     suspend fun searchProducts(
@@ -55,49 +81,52 @@ class ProductRepository(private val apiClient: ApiClient = ApiClient) {
         categoryId: Long? = null,
         minPrice: Double? = null,
         maxPrice: Double? = null
-    ): Result<List<ProductResponse>> = withContext(Dispatchers.IO) {
-        runCatching {
-            val response = apiClient.apiService.searchProducts(
-                name = query,
-                categoryId = categoryId,
-                minPrice = minPrice,
-                maxPrice = maxPrice
-            ).execute()
-            requireSuccess(response, "Lỗi tìm kiếm sản phẩm").data?.items.orEmpty()
-        }
+    ): NetworkResult<List<ProductResponse>> = withContext(Dispatchers.IO) {
+        executeRequest(
+            errorPrefix = "Lỗi tìm kiếm sản phẩm",
+            call = {
+                apiClient.apiService.searchProducts(
+                    name = query,
+                    categoryId = categoryId,
+                    minPrice = minPrice,
+                    maxPrice = maxPrice
+                ).execute()
+            },
+            mapper = { it.data?.items.orEmpty() }
+        )
     }
 
-    suspend fun createProduct(request: ProductCreateRequest): Result<ProductDetailResponse> = withContext(Dispatchers.IO) {
-        runCatching {
-            val response = apiClient.apiService.createProduct(request).execute()
-            requireSuccess(response, "Lỗi tạo sản phẩm")
+    suspend fun createProduct(request: ProductCreateRequest): NetworkResult<ProductDetailResponse> =
+        withContext(Dispatchers.IO) {
+            executeRequest(
+                errorPrefix = "Lỗi tạo sản phẩm",
+                call = { apiClient.apiService.createProduct(request).execute() },
+                mapper = { it }
+            )
         }
+
+    suspend fun updateProduct(productId: String, request: ProductCreateRequest): NetworkResult<ProductDetailResponse> =
+        withContext(Dispatchers.IO) {
+            executeRequest(
+                errorPrefix = "Lỗi cập nhật sản phẩm",
+                call = { apiClient.apiService.updateProduct(productId, request).execute() },
+                mapper = { it }
+            )
+        }
+
+    suspend fun deleteProduct(productId: String): NetworkResult<Unit> = withContext(Dispatchers.IO) {
+        executeRequest(
+            errorPrefix = "Lỗi xóa sản phẩm",
+            call = { apiClient.apiService.deleteProduct(productId).execute() },
+            mapper = { }
+        )
     }
 
-    suspend fun updateProduct(productId: String, request: ProductCreateRequest): Result<ProductDetailResponse> = withContext(Dispatchers.IO) {
-        runCatching {
-            val response = apiClient.apiService.updateProduct(productId, request).execute()
-            requireSuccess(response, "Lỗi cập nhật sản phẩm")
-        }
-    }
-
-    suspend fun deleteProduct(productId: String): Result<Unit> = withContext(Dispatchers.IO) {
-        runCatching {
-            val response = apiClient.apiService.deleteProduct(productId).execute()
-            if (!response.isSuccessful) {
-                throw IllegalStateException("Lỗi xóa sản phẩm: ${response.code()}")
-            }
-        }
-    }
-
-    suspend fun getMustTryProducts(): Result<List<ProductResponse>> = withContext(Dispatchers.IO) {
-        runCatching {
-            val response = apiClient.apiService.getMustTryProducts().execute()
-            if (response.isSuccessful) {
-                response.body().orEmpty()
-            } else {
-                throw IllegalStateException("Lỗi lấy sản phẩm nổi bật: ${response.code()}")
-            }
-        }
+    suspend fun getMustTryProducts(): NetworkResult<List<ProductResponse>> = withContext(Dispatchers.IO) {
+        executeRequest(
+            errorPrefix = "Lỗi lấy sản phẩm nổi bật",
+            call = { apiClient.apiService.getMustTryProducts().execute() },
+            mapper = { it.orEmpty() }
+        )
     }
 }

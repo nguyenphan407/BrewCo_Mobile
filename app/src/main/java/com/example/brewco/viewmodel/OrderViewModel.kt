@@ -42,6 +42,14 @@ class OrderViewModel : ViewModel() {
         loadInitialData()
     }
 
+    private fun setLoading(isLoading: Boolean) {
+        _uiState.value = _uiState.value.copy(isLoading = isLoading)
+    }
+
+    private fun setError(message: String?) {
+        _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = message)
+    }
+
     private fun loadInitialData() {
         loadCategories()
         loadMustTryProducts()
@@ -56,7 +64,7 @@ class OrderViewModel : ViewModel() {
 
     fun loadCategories() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            setLoading(true)
 
             ApiClient.apiService.getCategories().enqueue(object : Callback<CategoryListResponse> {
                 override fun onResponse(
@@ -72,20 +80,14 @@ class OrderViewModel : ViewModel() {
                         )
                         Log.d(TAG, "Loaded ${categories.size} categories from API")
                     } else {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            errorMessage = "Không thể tải danh mục: ${response.code()}"
-                        )
+                        setError("Không thể tải danh mục: ${response.code()}")
                         Log.e(TAG, "Failed to load categories: ${response.code()}")
                     }
                 }
 
                 override fun onFailure(call: Call<CategoryListResponse>, t: Throwable) {
                     Log.e(TAG, "Failed to load categories", t)
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = "Lỗi kết nối: ${t.message}"
-                    )
+                    setError("Lỗi kết nối: ${t.message}")
                 }
             })
         }
@@ -119,7 +121,7 @@ class OrderViewModel : ViewModel() {
 
     fun loadAllProducts(page: Int = 0) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            setLoading(true)
 
             ApiClient.apiService.getProductsPaginated(page, PAGE_SIZE).enqueue(object : Callback<ProductListResponse> {
                 override fun onResponse(
@@ -141,19 +143,13 @@ class OrderViewModel : ViewModel() {
                             Log.d(TAG, "Loaded ${data.items.size} products, page ${data.page}/${data.pages}")
                         }
                     } else {
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            errorMessage = "Không thể tải sản phẩm: ${response.code()}"
-                        )
+                        setError("Không thể tải sản phẩm: ${response.code()}")
                     }
                 }
 
                 override fun onFailure(call: Call<ProductListResponse>, t: Throwable) {
                     Log.e(TAG, "Failed to load products", t)
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = "Lỗi kết nối: ${t.message}"
-                    )
+                    setError("Lỗi kết nối: ${t.message}")
                 }
             })
         }
@@ -199,7 +195,7 @@ class OrderViewModel : ViewModel() {
         }
 
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            setLoading(true)
 
             ApiClient.apiService.searchProducts(name = query, page = 0, size = 50)
                 .enqueue(object : Callback<ProductListResponse> {
@@ -218,19 +214,13 @@ class OrderViewModel : ViewModel() {
                                 Log.d(TAG, "Search found ${data.items.size} products")
                             }
                         } else {
-                            _uiState.value = _uiState.value.copy(
-                                isLoading = false,
-                                errorMessage = "Không thể tìm kiếm: ${response.code()}"
-                            )
+                            setError("Không thể tìm kiếm: ${response.code()}")
                         }
                     }
 
                     override fun onFailure(call: Call<ProductListResponse>, t: Throwable) {
                         Log.e(TAG, "Failed to search products", t)
-                        _uiState.value = _uiState.value.copy(
-                            isLoading = false,
-                            errorMessage = "Lỗi tìm kiếm: ${t.message}"
-                        )
+                        setError("Lỗi tìm kiếm: ${t.message}")
                     }
                 })
         }

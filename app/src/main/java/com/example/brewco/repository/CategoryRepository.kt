@@ -10,6 +10,9 @@ import retrofit2.Response
 
 class CategoryRepository(private val apiClient: ApiClient = ApiClient) {
 
+    @Volatile
+    private var cachedCategories: List<CategoryResponse>? = null
+
     private fun <T, R> executeRequest(
         errorPrefix: String,
         call: () -> Response<T>,
@@ -32,12 +35,20 @@ class CategoryRepository(private val apiClient: ApiClient = ApiClient) {
         }
     }
 
-    suspend fun getCategories(): NetworkResult<List<CategoryResponse>> = withContext(Dispatchers.IO) {
-        executeRequest(
+    suspend fun getCategories(forceRefresh: Boolean = false): NetworkResult<List<CategoryResponse>> = withContext(Dispatchers.IO) {
+        cachedCategories?.takeIf { !forceRefresh }?.let { return@withContext NetworkResult.Success(it) }
+
+        val result = executeRequest(
             errorPrefix = "Lỗi lấy danh mục",
             call = { apiClient.apiService.getCategories().execute() },
             mapper = { it.data.orEmpty() }
         )
+
+        if (result is NetworkResult.Success) {
+            cachedCategories = result.data
+        }
+
+        result
     }
 
     suspend fun createCategory(request: CategoryRequest): NetworkResult<CategoryResponse> = withContext(Dispatchers.IO) {

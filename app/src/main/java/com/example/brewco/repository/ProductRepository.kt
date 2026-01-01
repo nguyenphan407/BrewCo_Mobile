@@ -17,7 +17,15 @@ class ProductRepository(private val apiClient: ApiClient = ApiClient) {
         
         @Volatile
         private var instance: ProductRepository? = null
+
+        private const val CACHE_MAX_PAGE = 1 // chỉ cache trang đầu để đơn giản
         
+
+    @Volatile
+    private var mustTryCache: List<ProductResponse>? = null
+
+    @Volatile
+    private var categoryProductCache: MutableMap<Long, List<ProductResponse>> = mutableMapOf()
         fun getInstance(): ProductRepository {
             return instance ?: synchronized(this) {
                 instance ?: ProductRepository().also { instance = it }
@@ -69,11 +77,21 @@ class ProductRepository(private val apiClient: ApiClient = ApiClient) {
         page: Int = 0,
         size: Int = DEFAULT_PAGE_SIZE
     ): NetworkResult<List<ProductResponse>> = withContext(Dispatchers.IO) {
-        executeRequest(
+        categoryProductCache[categoryId]?.takeIf { page <= CACHE_MAX_PAGE }?.let {
+            return@withContext NetworkResult.Success(it)
+        }
+
+        val result = executeRequest(
             errorPrefix = "Lỗi lấy sản phẩm theo danh mục",
             call = { apiClient.apiService.getProductsByCategory(categoryId, page, size).execute() },
             mapper = { it.data?.items.orEmpty() }
         )
+
+        if (result is NetworkResult.Success && page <= CACHE_MAX_PAGE) {
+            categoryProductCache[categoryId] = result.data
+        }
+
+        result
     }
 
     suspend fun searchProducts(
@@ -122,11 +140,19 @@ class ProductRepository(private val apiClient: ApiClient = ApiClient) {
         )
     }
 
-    suspend fun getMustTryProducts(): NetworkResult<List<ProductResponse>> = withContext(Dispatchers.IO) {
-        executeRequest(
+    suspend fun getMustTryProducts(forceRefresh: Boolean = false): NetworkResult<List<ProductResponse>> = withContext(Dispatchers.IO) {
+        mustTryCache?.takeIf { !forceRefresh }?.let { return@withContext NetworkResult.Success(it) }
+
+        val result = executeRequest(
             errorPrefix = "Lỗi lấy sản phẩm nổi bật",
             call = { apiClient.apiService.getMustTryProducts().execute() },
             mapper = { it.orEmpty() }
         )
+
+        if (result is NetworkResult.Success) {
+            mustTryCache = result.data
+        }
+
+        result
     }
 }

@@ -11,6 +11,8 @@ import com.example.brewco.data.dto.ProductResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -32,6 +34,8 @@ data class OrderUiState(
 class OrderViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(OrderUiState())
     val uiState: StateFlow<OrderUiState> = _uiState.asStateFlow()
+
+    private var searchJob: Job? = null
 
     companion object {
         private const val TAG = "OrderViewModel"
@@ -194,7 +198,10 @@ class OrderViewModel : ViewModel() {
             return
         }
 
-        viewModelScope.launch {
+        searchJob?.cancel()
+
+        searchJob = viewModelScope.launch {
+            delay(300)
             setLoading(true)
 
             ApiClient.apiService.searchProducts(name = query, page = 0, size = 50)

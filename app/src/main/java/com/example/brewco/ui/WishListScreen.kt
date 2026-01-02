@@ -95,7 +95,7 @@ fun WishListScreen(
                         .fillMaxSize()
                         .padding(horizontal = 16.dp)
                 ) {
-                    items(wishlistItems) { item ->
+                    items(items = wishlistItems, key = { it.id }) { item ->
                         WishlistItemCard(
                             item = item,
                             onRemove = { wishlistManager.removeItem(item.id) }

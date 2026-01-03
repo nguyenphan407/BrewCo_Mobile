@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# Run ktlint check before commit
+./gradlew ktlintCheck
+
+status=$?
+if [ $status -ne 0 ]; then
+  echo "ktlintCheck failed, aborting commit"
+  exit $status
+fi
+
+exit 0

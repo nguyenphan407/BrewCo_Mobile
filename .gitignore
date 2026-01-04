@@ -1,0 +1,27 @@
+### IntelliJ / Android Studio
+.idea/
+*.iml
+.kotlin/
+
+### Gradle
+.gradle/
+build/
+*/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+### Android
+local.properties
+/captures/
+.externalNativeBuild/
+.cxx/
+.navigation/
+*.apk
+*.aar
+*.ap_
+*.aab
+*.keystore
+*.jks
+
+### OS files
+.DS_Store
+Thumbs.db

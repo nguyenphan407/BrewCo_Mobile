@@ -256,6 +256,17 @@ fun CartScreen(
                     textAlign = TextAlign.Center
                 )
             }
+
+            if (removingEntryId != null) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(color = Color.Black.copy(alpha = 0.08f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = HighlandRed)
+                }
+            }
         }
     }
 }

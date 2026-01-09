@@ -79,6 +79,9 @@ fun LoginScreen(
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var rememberMe by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -176,7 +179,94 @@ fun LoginScreen(
                 }
             )
 
-            
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { rememberMe = !rememberMe }
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .border(1.dp, CafeBrown, RoundedCornerShape(6.dp))
+                            .background(if (rememberMe) CafeBrown else Color.Transparent, RoundedCornerShape(6.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (rememberMe) {
+                            Spacer(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .background(Color.White, RoundedCornerShape(2.5.dp))
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(text = "Ghi nhớ tôi", color = HighlandText, fontSize = 12.sp)
+                }
+
+                Text(
+                    text = "Quên mật khẩu?",
+                    color = HighlandText,
+                    fontSize = 12.sp,
+                    modifier = Modifier.clickable { onForgotPasswordClick() }
+                )
+            }
+
+            Button(
+                onClick = {
+                    if (email.isBlank() || password.isBlank()) {
+                        Toast.makeText(context, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    isLoading = true
+                    val matchedUser = mockUsers.firstOrNull { user ->
+                        user.email.equals(email.trim(), ignoreCase = true) && user.password == password
+                    }
+                    if (matchedUser != null) {
+                        Toast.makeText(context, "Chào mừng trở lại ${matchedUser.fullName}!", Toast.LENGTH_SHORT).show()
+                        onLoginClick(matchedUser.isAdmin)
+                    } else {
+                        Toast.makeText(context, "Email hoặc mật khẩu chưa đúng", Toast.LENGTH_SHORT).show()
+                    }
+                    isLoading = false
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(45.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = HighlandRed),
+                shape = RoundedCornerShape(6.dp),
+                enabled = !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = CafeBeige,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(text = "Đăng Nhập", color = CafeBeige, fontSize = 16.sp)
+                }
+            }
+
+            Row(
+                modifier = Modifier.padding(top = 16.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(text = "Bạn chưa có tài khoản? ", color = HighlandText, fontSize = 12.sp)
+                Text(
+                    text = "Đăng ký ngay",
+                    color = HighlandRed,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable { onSignUpClick() }
+                )
+            }
         }
     }
 }

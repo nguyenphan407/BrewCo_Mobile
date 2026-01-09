@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.example.brewco.ui.LoginScreen
+import com.example.brewco.ui.SignUpScreen
 import com.example.brewco.ui.SplashScreen
 import com.example.brewco.ui.theme.BrewCoTheme
 
@@ -39,11 +40,20 @@ class MainActivity : ComponentActivity() {
                             onSplashFinished = { currentScreen = Screen.Login }
                         )
                         Screen.Login -> LoginScreen(
-                            onForgotPasswordClick = { },
-                            onSignUpClick = {},
-                            onLoginClick = {}
+                            onForgotPasswordClick = { currentScreen = Screen.ForgotPassword },
+                            onSignUpClick = { currentScreen = Screen.SignUp },
+                            onLoginClick = { _ -> }
                         )
                         
+                        Screen.SignUp -> SignUpScreen(
+                            onBackClick = { currentScreen = Screen.Login },
+                            onSignUpSubmit = {
+                                currentScreen = Screen.Login
+                            },
+                            onNavigateToOTP = {
+                                currentScreen = Screen.Login
+                            }
+                        )
                     }
                 }
             }

@@ -92,7 +92,42 @@ fun SignUpScreen(
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
 
-   
+    val calendar = Calendar.getInstance()
+    val currentYear = calendar.get(Calendar.YEAR)
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+    val validateAndUpdateDate = { input: String ->
+        try {
+            if (input.isEmpty()) {
+                birthday = input
+            } else {
+                val df = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).apply { isLenient = false }
+                df.parse(input)
+                birthday = input
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    val datePickerDialog = DatePickerDialog(
+        context,
+        R.style.DatePickerTheme,
+        { _, year, month, dayOfMonth ->
+            calendar.set(Calendar.YEAR, year)
+            calendar.set(Calendar.MONTH, month)
+            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+            birthday = dateFormatter.format(calendar.time)
+        },
+        currentYear - 18,
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
+    datePickerDialog.datePicker.apply {
+        maxDate = System.currentTimeMillis()
+        updateDate(currentYear - 18, calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
+    }   
+
     val isFormValid = emailAddress.isNotEmpty() &&
         phoneNumber.isNotEmpty() &&
         fullName.isNotEmpty() &&
@@ -242,7 +277,45 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            
+            OutlinedTextField(
+                value = birthday,
+                onValueChange = { validateAndUpdateDate(it) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                placeholder = { Text("Chọn ngày sinh (DD/MM/YYYY)", color = CafeGrayText, fontSize = 16.sp) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.LightGray,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
+                singleLine = true,
+                shape = RoundedCornerShape(6.dp),
+                trailingIcon = {
+                    Icon(
+                        painter = painterResource(id = android.R.drawable.ic_menu_my_calendar),
+                        contentDescription = "Select date",
+                        tint = CafeGrayText,
+                        modifier = Modifier.clickable {
+                            focusManager.clearFocus()
+                            datePickerDialog.show()
+                        }
+                    )
+                }
+            )
+
+            Text(
+                text = "Định dạng: Ngày/Tháng/Năm (VD: 15/05/2004)",
+                color = CafeGrayText,
+                fontSize = 11.sp,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(start = 4.dp, top = 2.dp)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             ExposedDropdownMenuBox(
                 expanded = expanded,

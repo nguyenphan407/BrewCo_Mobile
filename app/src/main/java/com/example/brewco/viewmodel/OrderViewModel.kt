@@ -1,5 +1,4 @@
 package com.example.brewco.viewmodel
-package com.example.brewco.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -247,15 +246,4 @@ class OrderViewModel : ViewModel() {
             loadAllProducts(currentState.currentPage + 1)
         }
     }
-}
-import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-
-/**
- * Skeleton ViewModel for BookedScreen. Will be filled in next phases.
- */
-class OrderViewModel : ViewModel() {
-    private val _dummy = MutableStateFlow(true)
-    val dummy: StateFlow<Boolean> = _dummy
 }

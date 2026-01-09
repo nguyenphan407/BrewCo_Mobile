@@ -35,8 +35,8 @@ class MainActivity : ComponentActivity() {
                 ) { screen ->
                     when (screen) {
                         Screen.Login -> LoginScreen(
-                            onForgotPasswordClick = {},
-                            onSignUpClick = {}
+                            onForgotPasswordClick = { },
+                            onSignUpClick = {},
                         )
                     }
                 }
@@ -45,6 +45,6 @@ class MainActivity : ComponentActivity() {
     }
 
     enum class Screen {
-        Login
+        Login,
     }
 }

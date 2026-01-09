@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.example.brewco.ui.ForgotPasswordScreen
 import com.example.brewco.ui.LoginScreen
 import com.example.brewco.ui.SignUpScreen
 import com.example.brewco.ui.SplashScreen
@@ -44,7 +45,12 @@ class MainActivity : ComponentActivity() {
                             onSignUpClick = { currentScreen = Screen.SignUp },
                             onLoginClick = { _ -> }
                         )
-                        
+                        Screen.ForgotPassword -> ForgotPasswordScreen(
+                            onBackToLogin = { currentScreen = Screen.Login },
+                            onSubmitEmail = {
+                                currentScreen = Screen.Login
+                            }
+                        )
                         Screen.SignUp -> SignUpScreen(
                             onBackClick = { currentScreen = Screen.Login },
                             onSignUpSubmit = {

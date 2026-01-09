@@ -2,6 +2,7 @@ package com.example.brewco.repository
 
 import com.example.brewco.data.api.ApiClient
 import com.example.brewco.data.dto.ProductCreateRequest
+import com.example.brewco.data.dto.ProductDetailResponse
 import com.example.brewco.data.dto.ProductResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -41,7 +42,7 @@ class ProductRepository(private val apiClient: com.example.brewco.data.api.ApiCl
         }
     }
 
-    suspend fun createProduct(request: ProductCreateRequest): Result<ProductResponse> = withContext(Dispatchers.IO) {
+    suspend fun createProduct(request: ProductCreateRequest): Result<ProductDetailResponse> = withContext(Dispatchers.IO) {
         runCatching {
             val response = apiClient.apiService.createProduct(request).execute()
             if (response.isSuccessful) {
@@ -52,7 +53,7 @@ class ProductRepository(private val apiClient: com.example.brewco.data.api.ApiCl
         }
     }
 
-    suspend fun updateProduct(productId: String, request: ProductCreateRequest): Result<ProductResponse> = withContext(Dispatchers.IO) {
+    suspend fun updateProduct(productId: String, request: ProductCreateRequest): Result<ProductDetailResponse> = withContext(Dispatchers.IO) {
         runCatching {
             val response = apiClient.apiService.updateProduct(productId, request).execute()
             if (response.isSuccessful) {

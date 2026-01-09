@@ -27,7 +27,7 @@ interface ApiService {
 
     // Product detail
     @GET("api/products/id/{productId}")
-    fun getProductDetail(@Path("productId") productId: String): Call<com.example.brewco.data.dto.ProductDetailResponse>
+    fun getProductDetail(@Path("productId") productId: String): Call<ProductDetailResponse>
 
     // Products
     @GET("api/products")
@@ -43,6 +43,13 @@ interface ApiService {
         @Query("size") size: Int = 20,
         @Query("sort") sort: String? = null
     ): Call<ProductListResponse>
+
+    // Legacy overload for admin filter (params + pageable JSON strings)
+    @GET("api/products")
+    fun getProducts(
+        @Query("params") params: String,
+        @Query("pageable") pageable: String
+    ): Call<ResponseBody>
 
     @GET("api/products/category/{categoryId}")
     fun getProductsByCategory(
@@ -62,13 +69,13 @@ interface ApiService {
     ): Call<ProductListResponse>
 
     @POST("api/products")
-    fun createProduct(@Body request: ProductCreateRequest): Call<ProductResponse>
+    fun createProduct(@Body request: ProductCreateRequest): Call<ProductDetailResponse>
 
     @PUT("api/products/id/{productId}")
     fun updateProduct(
         @Path("productId") productId: String,
         @Body request: ProductCreateRequest
-    ): Call<ProductResponse>
+    ): Call<ProductDetailResponse>
 
     @DELETE("api/products/id/{productId}")
     fun deleteProduct(@Path("productId") productId: String): Call<ResponseBody>

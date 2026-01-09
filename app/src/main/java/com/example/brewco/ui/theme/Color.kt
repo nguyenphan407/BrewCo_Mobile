@@ -17,6 +17,11 @@ val CafeLoginBackground = Color(0xFFFFFFFF) // Cream background for login form
 val CafeGrayText = Color(0xFF828282)
 val CafeButtonBackground = Color(0xFFB30000)
 val CafeBlueLink = Color(0xFF139AE2) // Màu xanh dương cho link đăng nhập
+val CafeCardBackground = CafeBeige
+val CafeLight = Color(0xFFFBF6ED)
+val CafeOrange = CafeLightBrown
+val CafePrimary = CafeBrown
+val CafeSoft = Color(0xFFF2E6D8)
 
 
 val HighlandRed = Color(0xFFB30000)   // Đỏ chủ đạo Highlands

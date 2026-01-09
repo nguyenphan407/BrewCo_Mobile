@@ -1,5 +1,6 @@
 package com.example.brewco.ui
 
+import android.app.DatePickerDialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -26,15 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.brewco.R
 import com.example.brewco.ui.theme.*
-
-/**
- * INITIAL VERSION
- * -----------------------
- * - Chưa dùng API
- * - Chưa load dữ liệu thật
- * - Chưa validate input
- * - UI skeleton
- */
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,32 +39,51 @@ fun UserInfScreen(
     onUpdateInfoClick: () -> Unit = {},
     onDeleteAccountClick: () -> Unit = {}
 ) {
-
-    /* =========================
-     * Mock state
-     * ========================= */
+    /* -------- UI State (mock / init tối thiểu) -------- */
 
     var name by remember { mutableStateOf("Nguyễn Văn A") }
-    var email by remember { mutableStateOf("nguyenvana@gmail.com") }
-    var birthDate by remember { mutableStateOf("01/01/2000") }
+    var email by remember { mutableStateOf("nguyenvana@email.com") }
+    var birthDate by remember { mutableStateOf("01/01/1995") }
     var gender by remember { mutableStateOf("Nam") }
 
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
-
     var showCurrentPassword by remember { mutableStateOf(false) }
     var showNewPassword by remember { mutableStateOf(false) }
 
-    var expandedGenderDropdown by remember { mutableStateOf(false) }
+    /* -------- Date Picker (thuần UI) -------- */
 
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    val dateFormatter = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+    val datePickerDialog = DatePickerDialog(
+        context,
+        R.style.DatePickerTheme,
+        { _, year, month, day ->
+            calendar.set(year, month, day)
+            birthDate = dateFormatter.format(calendar.time)
+        },
+        calendar.get(Calendar.YEAR) - 18,
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    ).apply {
+        datePicker.maxDate = System.currentTimeMillis()
+    }
+
+    /* -------- Gender Dropdown -------- */
+
+    var expandedGenderDropdown by remember { mutableStateOf(false) }
     val genderOptions = listOf("Nam", "Nữ", "Khác")
+
+    /* ================= UI ================= */
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Cập nhật thông tin",
+                        "Cập nhật thông tin",
                         color = HighlandWhite,
                         fontWeight = FontWeight.Medium
                     )
@@ -77,7 +92,7 @@ fun UserInfScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = null,
+                            contentDescription = "Back",
                             tint = HighlandWhite
                         )
                     }
@@ -94,13 +109,10 @@ fun UserInfScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(HighlandWhite)
                 .verticalScroll(rememberScrollState())
         ) {
 
-            /* =========================
-             * Header
-             * ========================= */
+            /* -------- Header -------- */
 
             Column(
                 modifier = Modifier
@@ -109,19 +121,34 @@ fun UserInfScreen(
                     .padding(28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .background(Color.White),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.coffee_beans),
+                            contentDescription = null,
+                            modifier = Modifier.size(50.dp)
+                        )
+                    }
 
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .background(Color.White),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(R.drawable.coffee_beans),
-                        contentDescription = null,
-                        modifier = Modifier.size(50.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(HighlandWhite, CircleShape)
+                            .padding(6.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_delete),
+                            contentDescription = null,
+                            tint = HighlandRed,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -136,24 +163,24 @@ fun UserInfScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            /* =========================
-             * Personal Info (Init)
-             * ========================= */
+            /* -------- Personal Info -------- */
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
+                Column(Modifier.padding(16.dp)) {
 
-                    SectionTitle("Thông tin cá nhân")
+                    Text(
+                        "Thông tin cá nhân",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = HighlandRed
+                    )
 
                     Spacer(Modifier.height(16.dp))
 
@@ -161,8 +188,16 @@ fun UserInfScreen(
                         value = name,
                         onValueChange = { name = it },
                         label = { Text("Họ và tên") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = HighlandRed,
+                            unfocusedBorderColor = Color.LightGray,
+                            cursorColor = HighlandRed,
+                            focusedLabelColor = HighlandRed,
+                            focusedTextColor = HighlandText,
+                            unfocusedTextColor = HighlandText
+                        ),
+                        modifier = Modifier.fillMaxWidth()
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -172,10 +207,16 @@ fun UserInfScreen(
                         onValueChange = { email = it },
                         label = { Text("Email") },
                         modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = KeyboardType.Email
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = HighlandRed,
+                            unfocusedBorderColor = Color.LightGray,
+                            cursorColor = HighlandRed,
+                            focusedLabelColor = HighlandRed,
+                            focusedTextColor = HighlandText,
+                            unfocusedTextColor = HighlandText
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -184,11 +225,21 @@ fun UserInfScreen(
 
                         OutlinedTextField(
                             value = birthDate,
-                            onValueChange = { },
-                            label = { Text("Ngày sinh") },
-                            modifier = Modifier.weight(1f),
+                            onValueChange = {},
                             readOnly = true,
-                            shape = RoundedCornerShape(12.dp)
+                            label = { Text("Ngày sinh") },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = HighlandRed,
+                                unfocusedBorderColor = Color.LightGray,
+                                cursorColor = HighlandRed,
+                                focusedLabelColor = HighlandRed,
+                                focusedTextColor = HighlandText,
+                                unfocusedTextColor = HighlandText
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { datePickerDialog.show() }
                         )
 
                         ExposedDropdownMenuBox(
@@ -198,21 +249,26 @@ fun UserInfScreen(
                             },
                             modifier = Modifier.weight(1f)
                         ) {
-
                             OutlinedTextField(
                                 value = gender,
                                 onValueChange = {},
-                                label = { Text("Giới tính") },
                                 readOnly = true,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .menuAnchor(),
+                                label = { Text("Giới tính") },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = HighlandRed,
+                                    unfocusedBorderColor = Color.LightGray,
+                                    cursorColor = HighlandRed,
+                                    focusedLabelColor = HighlandRed,
+                                    focusedTextColor = HighlandText,
+                                    unfocusedTextColor = HighlandText
+                                ),
+                                modifier = Modifier.menuAnchor(),
                                 trailingIcon = {
                                     ExposedDropdownMenuDefaults.TrailingIcon(
                                         expanded = expandedGenderDropdown
                                     )
-                                },
-                                shape = RoundedCornerShape(12.dp)
+                                }
                             )
 
                             ExposedDropdownMenu(
@@ -223,7 +279,7 @@ fun UserInfScreen(
                             ) {
                                 genderOptions.forEach {
                                     DropdownMenuItem(
-                                        text = { Text(it) },
+                                        text = { Text(it, color = CafeBrown) },
                                         onClick = {
                                             gender = it
                                             expandedGenderDropdown = false
@@ -238,24 +294,24 @@ fun UserInfScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            /* =========================
-             * Security (Init)
-             * ========================= */
+            /* -------- Security -------- */
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
+                Column(Modifier.padding(16.dp)) {
 
-                    SectionTitle("Bảo mật")
+                    Text(
+                        "Bảo mật",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = HighlandRed
+                    )
 
                     Spacer(Modifier.height(16.dp))
 
@@ -263,27 +319,24 @@ fun UserInfScreen(
                         value = currentPassword,
                         onValueChange = { currentPassword = it },
                         label = { Text("Mật khẩu hiện tại") },
-                        modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = if (showCurrentPassword)
-                            VisualTransformation.None
-                        else PasswordVisualTransformation(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = HighlandRed,
+                            unfocusedBorderColor = Color.LightGray,
+                            cursorColor = HighlandRed,
+                            focusedLabelColor = HighlandRed,
+                            focusedTextColor = HighlandText,
+                            unfocusedTextColor = HighlandText
+                        ),
+                        visualTransformation =
+                            if (showCurrentPassword)
+                                VisualTransformation.None
+                            else PasswordVisualTransformation(),
                         trailingIcon = {
-                            IconButton(
-                                onClick = {
-                                    showCurrentPassword = !showCurrentPassword
-                                }
-                            ) {
-                                Icon(
-                                    painter = painterResource(
-                                        if (showCurrentPassword)
-                                            R.drawable.eye
-                                        else R.drawable.close_eye
-                                    ),
-                                    contentDescription = null
-                                )
+                            IconButton {
+                                showCurrentPassword = !showCurrentPassword
                             }
-                        },
-                        shape = RoundedCornerShape(12.dp)
+                        }
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -292,58 +345,45 @@ fun UserInfScreen(
                         value = newPassword,
                         onValueChange = { newPassword = it },
                         label = { Text("Mật khẩu mới") },
-                        modifier = Modifier.fillMaxWidth(),
-                        visualTransformation = if (showNewPassword)
-                            VisualTransformation.None
-                        else PasswordVisualTransformation(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = HighlandRed,
+                            unfocusedBorderColor = Color.LightGray,
+                            cursorColor = HighlandRed,
+                            focusedLabelColor = HighlandRed,
+                            focusedTextColor = HighlandText,
+                            unfocusedTextColor = HighlandText
+                        ),
+                        visualTransformation =
+                            if (showNewPassword)
+                                VisualTransformation.None
+                            else PasswordVisualTransformation(),
                         trailingIcon = {
-                            IconButton(
-                                onClick = {
-                                    showNewPassword = !showNewPassword
-                                }
-                            ) {
-                                Icon(
-                                    painter = painterResource(
-                                        if (showNewPassword)
-                                            R.drawable.eye
-                                        else R.drawable.close_eye
-                                    ),
-                                    contentDescription = null
-                                )
+                            IconButton {
+                                showNewPassword = !showNewPassword
                             }
-                        },
-                        shape = RoundedCornerShape(12.dp)
+                        }
                     )
                 }
             }
 
             Spacer(Modifier.height(24.dp))
 
-            /* =========================
-             * Actions
-             * ========================= */
+            /* -------- Actions -------- */
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
             ) {
-
                 Button(
                     onClick = onUpdateInfoClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = HighlandRed
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = HighlandRed)
                 ) {
-                    Text(
-                        text = "Cập nhật thông tin",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Cập nhật thông tin", fontWeight = FontWeight.Bold)
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -353,19 +393,15 @@ fun UserInfScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    shape = RoundedCornerShape(12.dp),
                     border = ButtonDefaults.outlinedButtonBorder
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_delete),
+                        painter = painterResource(id = R.drawable.ic_delete),
                         contentDescription = null,
                         tint = HighlandRed
                     )
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = "Xóa tài khoản",
-                        fontWeight = FontWeight.Bold
-                    )
+                    Text("Xóa tài khoản", fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -374,23 +410,12 @@ fun UserInfScreen(
     }
 }
 
-/* =========================
- * Small components
- * ========================= */
+private fun ColumnScope.IconButton(function2: () -> Unit) {}
 
-@Composable
-private fun SectionTitle(text: String) {
-    Text(
-        text = text,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        color = HighlandRed
-    )
-}
 
 @Preview(showBackground = true)
 @Composable
-fun UserInfScreenInitPreview() {
+fun UserInfScreenPreview() {
     BrewCoTheme {
         UserInfScreen(onBackClick = {})
     }

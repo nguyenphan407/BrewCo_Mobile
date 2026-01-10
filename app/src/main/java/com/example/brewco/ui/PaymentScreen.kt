@@ -338,7 +338,62 @@ fun PaymentScreen(
     }
 }
 
+@Composable
+private fun DeliveryInfoSection(
+    name: String,
+    phone: String,
+    address: String
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = HighlandRed.copy(alpha = 0.05f)),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Giao hàng tận nơi",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = HighlandText
+                )
+                TextButton(onClick = { /* Mock screen */ }) {
+                    Text(text = "Thay đổi", color = HighlandRed, fontWeight = FontWeight.Bold)
+                }
+            }
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "$name | $phone",
+                fontSize = 15.sp,
+                color = HighlandText
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = address,
+                fontSize = 14.sp,
+                color = HighlandText.copy(alpha = 0.7f)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Thời gian giao dự kiến: 15 - 30 phút",
+                fontSize = 14.sp,
+                color = HighlandText
+            )
+        }
+    }
+}
 
 
 

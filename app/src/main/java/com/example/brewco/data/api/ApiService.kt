@@ -3,15 +3,19 @@ package com.example.brewco.data.api
 import com.example.brewco.data.dto.CategoryListResponse
 import com.example.brewco.data.dto.CategoryRequest
 import com.example.brewco.data.dto.CategoryResponse
+import com.example.brewco.data.dto.OrderResponse
 import com.example.brewco.data.dto.ProductCreateRequest
 import com.example.brewco.data.dto.ProductDetailResponse
 import com.example.brewco.data.dto.ProductListResponse
 import com.example.brewco.data.dto.ProductResponse
+import com.example.brewco.data.dto.VoucherRequest
+import com.example.brewco.data.dto.VoucherResponse
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -98,4 +102,34 @@ interface ApiService {
 
     @DELETE("api/categories/{id}")
     fun deleteCategory(@Path("id") categoryId: String): Call<ResponseBody>
+
+    @GET("api/order/me")
+    fun getMyOrders(
+        @Header("Authorization") token: String
+    ): Call<OrderResponse>
+
+    @GET("api/vouchers")
+    fun getVouchers(): Call<List<VoucherResponse>>
+
+    @GET("api/vouchers/{id}")
+    fun getVoucherDetail(@Path("id") voucherId: String): Call<VoucherResponse>
+
+    @POST("api/vouchers")
+    fun createVoucher(
+        @Header("Authorization") token: String,
+        @Body request: VoucherRequest
+    ): Call<VoucherResponse>
+
+    @PUT("api/vouchers/{id}")
+    fun updateVoucher(
+        @Header("Authorization") token: String,
+        @Path("id") voucherId: String,
+        @Body request: VoucherRequest
+    ): Call<VoucherResponse>
+
+    @DELETE("api/vouchers/{id}")
+    fun deleteVoucher(
+        @Header("Authorization") token: String,
+        @Path("id") voucherId: String
+    ): Call<Void>
 }

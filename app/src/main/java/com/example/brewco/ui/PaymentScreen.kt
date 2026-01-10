@@ -462,6 +462,109 @@ private fun SelectedProductsSection(items: List<CartItem>) {
     }
 }
 
+@Composable
+private fun CostSummarySection(
+    total: Int,
+    discountAmount: Int,
+    appliedVoucher: Voucher?,
+    finalTotal: Int,
+    onSelectVoucher: () -> Unit,
+    onRemoveVoucher: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = HighlandWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                text = "Tổng quan chi phí",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = HighlandText
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SummaryRow(label = "Thành tiền", value = FormatUtils.formatPrice(total))
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            SummaryRow(label = "Phí giao hàng", value = FormatUtils.formatPrice(0))
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onSelectVoucher)
+                    .padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = "Khuyến mãi", fontSize = 15.sp, color = HighlandText)
+                    Text(
+                        text = appliedVoucher?.title ?: "Chưa áp dụng",
+                        fontSize = 13.sp,
+                        color = HighlandText.copy(alpha = 0.7f)
+                    )
+                }
+                if (appliedVoucher != null) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "-${FormatUtils.formatPrice(discountAmount)}",
+                            color = HighlandRed,
+                            fontWeight = FontWeight.Bold
+                        )
+                        TextButton(onClick = onRemoveVoucher) {
+                            Text(text = "Bỏ", color = HighlandRed)
+                        }
+                    }
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = HighlandText.copy(alpha = 0.4f)
+                    )
+                }
+            }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            SummaryRow(
+                label = "Số tiền thanh toán",
+                value = FormatUtils.formatPrice(finalTotal.coerceAtLeast(0)),
+                emphasize = true
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryRow(label: String, value: String, emphasize: Boolean = false) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            fontSize = if (emphasize) 16.sp else 14.sp,
+            fontWeight = if (emphasize) FontWeight.Bold else FontWeight.Normal,
+            color = HighlandText
+        )
+        Text(
+            text = value,
+            fontSize = if (emphasize) 18.sp else 14.sp,
+            fontWeight = if (emphasize) FontWeight.Bold else FontWeight.Medium,
+            color = if (emphasize) HighlandRed else HighlandText
+        )
+    }
+}
+
+
+
+
 
 
 

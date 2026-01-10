@@ -8,6 +8,7 @@ import com.example.brewco.data.dto.ProductCreateRequest
 import com.example.brewco.data.dto.ProductDetailResponse
 import com.example.brewco.data.dto.ProductListResponse
 import com.example.brewco.data.dto.ProductResponse
+import com.example.brewco.data.dto.UserProfileResponse
 import com.example.brewco.data.dto.VoucherRequest
 import com.example.brewco.data.dto.VoucherResponse
 import okhttp3.ResponseBody
@@ -47,6 +48,9 @@ interface ApiService {
         @Query("size") size: Int = 20,
         @Query("sort") sort: String? = null
     ): Call<ProductListResponse>
+
+    @GET("api/account/me")
+    fun getCurrentUser(@Header("Authorization") token: String): Call<UserProfileResponse>
 
     // Legacy overload for admin filter (params + pageable JSON strings)
     @GET("api/products")

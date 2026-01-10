@@ -38,16 +38,12 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -72,9 +68,9 @@ import com.example.brewco.data.dto.CategoryListResponse
 import com.example.brewco.data.dto.CategoryResponse
 import com.example.brewco.ui.theme.CafeBeige
 import com.example.brewco.ui.theme.CafeBrown
+import com.example.brewco.ui.theme.CafeButtonBackground
 import com.example.brewco.ui.theme.CafeCardBackground
 import com.example.brewco.ui.theme.CafeLight
-import com.example.brewco.ui.theme.CafeOrange
 import com.example.brewco.ui.theme.CafePrimary
 import com.example.brewco.ui.theme.CafeSoft
 import java.io.IOException
@@ -355,7 +351,7 @@ fun ProductDetailDialog(
                         .fillMaxWidth()
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = CafeOrange
+                        containerColor = CafeButtonBackground
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -683,7 +679,7 @@ fun ProductManagementContent(
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = "Xóa",
-                                    tint = Color.Red,
+                                    tint = Color(0xFFE57373),
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -695,7 +691,14 @@ fun ProductManagementContent(
 
         // Hiển thị trạng thái tải chi tiết sản phẩm (nếu có)
         if (isFetchingProductDetail) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
         }
     }
 
@@ -914,40 +917,5 @@ fun ProductManagementContent(
                 })
             }
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ProductManagementScreen() {
-    var showAddDialog by remember { mutableStateOf(false) }
-
-    androidx.compose.material3.Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Admin - Quản lý sản phẩm", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = CafeBrown
-                )
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddDialog = true },
-                containerColor = CafeOrange,
-                contentColor = Color.White
-            ) {
-                Text("+")
-            }
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)) {
-            ProductManagementContent(
-                showAddDialog = showAddDialog,
-                onAddDialogDismiss = { showAddDialog = false }
-            )
-        }
     }
 }

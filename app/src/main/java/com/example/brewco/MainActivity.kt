@@ -13,7 +13,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.example.brewco.data.models.CheckoutSummary
+import com.example.brewco.data.models.Voucher
 import com.example.brewco.ui.BookedScreen
+import com.example.brewco.ui.CartScreen
 import com.example.brewco.ui.ChangePasswordScreen
 import com.example.brewco.ui.DifferScreen
 import com.example.brewco.ui.ForgotPasswordScreen
@@ -21,6 +24,8 @@ import com.example.brewco.ui.HistoryScreen
 import com.example.brewco.ui.LoginScreen
 import com.example.brewco.ui.OTP_FGPassScreen
 import com.example.brewco.ui.OTP_SignUpScreen
+import com.example.brewco.ui.PaymentScreen
+import com.example.brewco.ui.PrdScreen
 import com.example.brewco.ui.SignUpScreen
 import com.example.brewco.ui.SplashScreen
 import com.example.brewco.ui.UserInfScreen
@@ -36,6 +41,9 @@ class MainActivity : ComponentActivity() {
             BrewCoTheme {
                 var currentScreen by remember { mutableStateOf(Screen.Splash) }
                 var emailForOtp by remember { mutableStateOf("") }
+                var selectedProductId by remember { mutableStateOf<String?>(null) }
+                var checkoutSummary by remember { mutableStateOf<CheckoutSummary?>(null) }
+                var appliedVoucher by remember { mutableStateOf<Voucher?>(null) }
 
                 AnimatedContent(
                     targetState = currentScreen,
@@ -107,6 +115,10 @@ class MainActivity : ComponentActivity() {
                                     "differ" -> Screen.Differ
                                     else -> Screen.Order
                                 }
+                            },
+                            onProductClick = { product ->
+                                selectedProductId = product.id
+                                currentScreen = Screen.ProductDetail
                             }
                         )
                         Screen.Differ -> DifferScreen(
@@ -139,6 +151,10 @@ class MainActivity : ComponentActivity() {
                                     "differ" -> Screen.Differ
                                     else -> Screen.Home
                                 }
+                            },
+                            onProductClick = { product ->
+                                selectedProductId = product.id
+                                currentScreen = Screen.ProductDetail
                             }
                         )
                         Screen.Rewards -> DifferScreen(
@@ -153,6 +169,53 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         )
+                        Screen.ProductDetail -> {
+                            val productId = selectedProductId
+                            if (productId == null) {
+                                currentScreen = Screen.Order
+                            } else {
+                                PrdScreen(
+                                    productId = productId,
+                                    onBackClick = {
+                                        selectedProductId = null
+                                        currentScreen = Screen.Order
+                                    },
+                                    onViewCart = { currentScreen = Screen.Cart },
+                                    onNavigateToMain = {
+                                        selectedProductId = null
+                                        currentScreen = Screen.Order
+                                    }
+                                )
+                            }
+                        }
+                        Screen.Cart -> CartScreen(
+                            onBackClick = {
+                                currentScreen = if (selectedProductId != null) Screen.ProductDetail else Screen.Order
+                            },
+                            onNavigateToPayment = { summary ->
+                                checkoutSummary = summary
+                                currentScreen = Screen.Payment
+                            }
+                        )
+                        Screen.Payment -> {
+                            val summary = checkoutSummary
+                            if (summary == null) {
+                                currentScreen = Screen.Cart
+                            } else {
+                                PaymentScreen(
+                                    checkoutSummary = summary,
+                                    appliedVoucher = appliedVoucher,
+                                    onVoucherApplied = { appliedVoucher = it },
+                                    onBackClick = { currentScreen = Screen.Cart },
+                                    onNavigateToMain = {
+                                        appliedVoucher = null
+                                        checkoutSummary = null
+                                        selectedProductId = null
+                                        currentScreen = Screen.Order
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -172,6 +235,9 @@ class MainActivity : ComponentActivity() {
         Order,
         Rewards,
         Differ,
+        ProductDetail,
+        Cart,
+        Payment,
         UserInfo,
         History,
         // admin

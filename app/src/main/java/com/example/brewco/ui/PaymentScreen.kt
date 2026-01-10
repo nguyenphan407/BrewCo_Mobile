@@ -562,6 +562,95 @@ private fun SummaryRow(label: String, value: String, emphasize: Boolean = false)
     }
 }
 
+@Composable
+private fun PaymentMethodSection(
+    selectedMethod: PaymentMethod,
+    onSelectPaymentMethod: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = HighlandWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Text(
+                text = "Thanh toán",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = HighlandText
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSelectPaymentMethod() },
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = painterResource(id = selectedMethod.iconRes),
+                        contentDescription = "Method",
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = selectedMethod.label,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = HighlandText
+                    )
+                }
+                Icon(
+                    imageVector = Icons.Filled.KeyboardArrowRight,
+                    contentDescription = null,
+                    tint = HighlandText.copy(alpha = 0.4f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PaymentOptionRow(
+    method: PaymentMethod,
+    isSelected: Boolean,
+    onSelect: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSelect() }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = isSelected,
+            onClick = onSelect,
+            colors = RadioButtonDefaults.colors(
+                selectedColor = HighlandRed,
+                unselectedColor = HighlandText.copy(alpha = 0.4f)
+            )
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Image(
+            painter = painterResource(id = method.iconRes),
+            contentDescription = method.label,
+            modifier = Modifier.size(36.dp)
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = method.label,
+            fontSize = 16.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            color = HighlandText
+        )
+    }
+}
+
 
 
 

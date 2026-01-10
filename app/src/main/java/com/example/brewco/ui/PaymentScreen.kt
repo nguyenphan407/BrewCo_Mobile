@@ -651,7 +651,37 @@ private fun PaymentOptionRow(
     }
 }
 
-
+@Composable
+private fun VoucherOptionCard(
+    voucher: Voucher,
+    isApplied: Boolean,
+    onSelect: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSelect() },
+        colors = CardDefaults.cardColors(
+            containerColor = if (isApplied) HighlandRed.copy(alpha = 0.1f) else HighlandWhite
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = voucher.title,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = HighlandText
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Giảm ${voucher.discount} • HSD ${voucher.expiry}",
+                fontSize = 13.sp,
+                color = HighlandText.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
 
 
 

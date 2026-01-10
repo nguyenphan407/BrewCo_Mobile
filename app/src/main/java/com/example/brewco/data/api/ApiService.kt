@@ -3,7 +3,18 @@ package com.example.brewco.data.api
 import com.example.brewco.data.dto.CategoryListResponse
 import com.example.brewco.data.dto.CategoryRequest
 import com.example.brewco.data.dto.CategoryResponse
+import com.example.brewco.data.dto.CreateOrderRequest
+import com.example.brewco.data.dto.CreateOrderResponse
+import com.example.brewco.data.dto.ForgotPasswordRequest
+import com.example.brewco.data.dto.LoginRequest
+import com.example.brewco.data.dto.LoginResponse
 import com.example.brewco.data.dto.OrderResponse
+import com.example.brewco.data.dto.PaymentRequest
+import com.example.brewco.data.dto.PaymentResponse
+import com.example.brewco.data.dto.RegisterRequest
+import com.example.brewco.data.dto.ResendOtpRequest
+import com.example.brewco.data.dto.ResetPasswordRequest
+import com.example.brewco.data.dto.UpdateOrderStatusRequest
 import com.example.brewco.data.dto.ProductCreateRequest
 import com.example.brewco.data.dto.ProductDetailResponse
 import com.example.brewco.data.dto.ProductListResponse
@@ -23,9 +34,31 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
- * Chỉ giữ các endpoint phục vụ BookedScreen + admin product/category.
+ * BrewCo API Service - All endpoints
  */
 interface ApiService {
+    // Auth endpoints
+    @POST("api/auth/login")
+    fun login(@Body request: LoginRequest): Call<LoginResponse>
+    
+    @POST("api/auth/register")
+    fun register(@Body request: RegisterRequest): Call<Void>
+
+    @GET("api/auth/email-verification/{id}")
+    fun verifyOtp(@Path("id") id: String): Call<Void>
+    
+    @POST("api/auth/resend-otp")
+    fun resendOtp(@Body request: ResendOtpRequest): Call<Void>
+    
+    @GET("api/auth/reset-password/{id}")
+    fun forgotPassword(@Path("id") id: String): Call<Void>
+    
+    @POST("api/auth/reset-password/{email}")
+    fun resetPassword(
+        @Path("email") email: String,
+        @Body request: ResetPasswordRequest
+    ): Call<Void>
+    
     // Must try products
     @GET("api/products/must-try")
     fun getMustTryProducts(): Call<List<ProductResponse>>
@@ -36,24 +69,11 @@ interface ApiService {
 
     // Products
     @GET("api/products")
-    fun getProductsPaginated(
-        @Query("page") page: Int = 0,
-        @Query("size") size: Int = 20,
-        @Query("sort") sort: String? = null
-    ): Call<ProductListResponse>
-
-    @GET("api/products")
     fun getProducts(
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20,
         @Query("sort") sort: String? = null
     ): Call<ProductListResponse>
-
-    @GET("api/auth/logout")
-    fun logout(@Header("Authorization") token: String): Call<Void>
-
-    @GET("api/account/me")
-    fun getCurrentUser(@Header("Authorization") token: String): Call<UserProfileResponse>
 
     // Legacy overload for admin filter (params + pageable JSON strings)
     @GET("api/products")
@@ -110,11 +130,30 @@ interface ApiService {
     @DELETE("api/categories/{id}")
     fun deleteCategory(@Path("id") categoryId: String): Call<ResponseBody>
 
+    // Order endpoints
+    @POST("api/order")
+    fun createOrder(
+        @Header("Authorization") token: String,
+        @Body request: CreateOrderRequest
+    ): Call<CreateOrderResponse>
+
     @GET("api/order/me")
     fun getMyOrders(
         @Header("Authorization") token: String
     ): Call<OrderResponse>
 
+    @POST("api/order/{orderId}/status")
+    fun updateOrderStatus(
+        @Header("Authorization") token: String,
+        @Path("orderId") orderId: String,
+        @Body request: UpdateOrderStatusRequest
+    ): Call<CreateOrderResponse>
+
+    // Payment endpoints
+    @POST("api/payment/vnpay")
+    fun payWithVnpay(@Body paymentRequest: PaymentRequest): Call<PaymentResponse>
+
+    // Voucher endpoints
     @GET("api/vouchers")
     fun getVouchers(): Call<List<VoucherResponse>>
 

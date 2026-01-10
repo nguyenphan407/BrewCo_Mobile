@@ -47,9 +47,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.brewco.R
 import com.example.brewco.data.api.ApiClient
 import com.example.brewco.data.dto.CategoryListResponse
 import com.example.brewco.data.dto.CategoryRequest
@@ -95,13 +97,16 @@ fun CategoryManagementScreen() {
                 if (response.isSuccessful) {
                     categories = response.body()?.data ?: emptyList()
                 } else {
-                    errorMessage = "Lỗi lấy danh mục: ${response.code()}"
+                    errorMessage = context.getString(R.string.admin_category_error_code, response.code())
                 }
             }
 
             override fun onFailure(call: Call<CategoryListResponse>, t: Throwable) {
                 isLoading = false
-                errorMessage = "Lỗi kết nối: ${t.localizedMessage}"
+                errorMessage = context.getString(
+                    R.string.admin_category_error_connection,
+                    t.localizedMessage ?: "-"
+                )
             }
         })
     }
@@ -118,7 +123,7 @@ fun CategoryManagementScreen() {
         val trimmedName = nameInput.trim()
         val trimmedDesc = descriptionInput.trim()
         if (trimmedName.isEmpty()) {
-            validationError = "Tên danh mục không được để trống"
+            validationError = context.getString(R.string.admin_category_validation_name)
             return
         }
 
@@ -131,17 +136,27 @@ fun CategoryManagementScreen() {
                 ) {
                     isSubmitting = false
                     if (response.isSuccessful) {
-                        Toast.makeText(context, "Tạo danh mục thành công", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.admin_category_add_success),
+                            Toast.LENGTH_SHORT
+                        ).show()
                         showDialog = false
                         loadCategories()
                     } else {
-                        validationError = "Tạo thất bại (${response.code()})"
+                        validationError = context.getString(
+                            R.string.admin_category_add_fail,
+                            response.code()
+                        )
                     }
                 }
 
                 override fun onFailure(call: Call<CategoryResponse>, t: Throwable) {
                     isSubmitting = false
-                    validationError = "Lỗi kết nối: ${t.localizedMessage}"
+                    validationError = context.getString(
+                        R.string.admin_category_error_connection,
+                        t.localizedMessage ?: "-"
+                    )
                 }
             })
     }
@@ -152,7 +167,7 @@ fun CategoryManagementScreen() {
         val trimmedName = nameInput.trim()
         val trimmedDesc = descriptionInput.trim()
         if (trimmedName.isEmpty()) {
-            validationError = "Tên danh mục không được để trống"
+            validationError = context.getString(R.string.admin_category_validation_name)
             return
         }
 
@@ -165,17 +180,27 @@ fun CategoryManagementScreen() {
                 ) {
                     isSubmitting = false
                     if (response.isSuccessful) {
-                        Toast.makeText(context, "Cập nhật thành công", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.admin_category_update_success),
+                            Toast.LENGTH_SHORT
+                        ).show()
                         showDialog = false
                         loadCategories()
                     } else {
-                        validationError = "Cập nhật thất bại (${response.code()})"
+                        validationError = context.getString(
+                            R.string.admin_category_update_fail,
+                            response.code()
+                        )
                     }
                 }
 
                 override fun onFailure(call: Call<CategoryResponse>, t: Throwable) {
                     isSubmitting = false
-                    validationError = "Lỗi kết nối: ${t.localizedMessage}"
+                    validationError = context.getString(
+                        R.string.admin_category_error_connection,
+                        t.localizedMessage ?: "-"
+                    )
                 }
             })
     }
@@ -188,12 +213,19 @@ fun CategoryManagementScreen() {
                 isSubmitting = false
                 showDeleteDialog = false
                 if (response.isSuccessful) {
-                    Toast.makeText(context, "Đã xoá danh mục", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.admin_category_delete_success),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     loadCategories()
                 } else {
                     Toast.makeText(
                         context,
-                        "Xoá thất bại (${response.code()})",
+                        context.getString(
+                            R.string.admin_category_delete_fail,
+                            response.code()
+                        ),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -204,7 +236,10 @@ fun CategoryManagementScreen() {
                 showDeleteDialog = false
                 Toast.makeText(
                     context,
-                    "Lỗi kết nối: ${t.localizedMessage}",
+                    context.getString(
+                        R.string.admin_category_error_connection,
+                        t.localizedMessage ?: "-"
+                    ),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -223,7 +258,7 @@ fun CategoryManagementScreen() {
     androidx.compose.material3.Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Admin - Quản lý danh mục", color = Color.White) },
+                title = { Text(stringResource(R.string.admin_category_title), color = Color.White) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = CafeBrown),
                 scrollBehavior = scrollBehavior
             )
@@ -237,7 +272,10 @@ fun CategoryManagementScreen() {
                 containerColor = CafeOrange,
                 contentColor = Color.White
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Thêm danh mục")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = stringResource(R.string.admin_action_add)
+                )
             }
         }
     ) { paddingValues ->
@@ -262,7 +300,7 @@ fun CategoryManagementScreen() {
 
                 categories.isEmpty() -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(text = "Chưa có danh mục", color = CafeBrown)
+                        Text(text = stringResource(R.string.admin_category_empty), color = CafeBrown)
                     }
                 }
 
@@ -275,7 +313,7 @@ fun CategoryManagementScreen() {
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            label = { Text("Tìm kiếm danh mục") },
+                            label = { Text(stringResource(R.string.admin_category_search_hint)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = 12.dp)
@@ -283,7 +321,7 @@ fun CategoryManagementScreen() {
 
                         val visibleCategories = categories.filter {
                             it.name.contains(debouncedQuery, ignoreCase = true) ||
-                                    it.description.contains(debouncedQuery, ignoreCase = true)
+                                    (it.description ?: "").contains(debouncedQuery, ignoreCase = true)
                         }
 
                         if (visibleCategories.isEmpty()) {
@@ -291,7 +329,7 @@ fun CategoryManagementScreen() {
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(text = "Không tìm thấy danh mục", color = CafeBrown)
+                                Text(text = stringResource(R.string.admin_category_not_found), color = CafeBrown)
                             }
                         } else {
                             LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -378,21 +416,21 @@ private fun CategoryCard(
                 OutlinedButton(onClick = onEdit) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Chỉnh sửa",
+                        contentDescription = stringResource(R.string.admin_action_edit),
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Sửa")
+                    Text(text = stringResource(R.string.admin_action_edit))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(onClick = onDelete, colors = ButtonDefaults.buttonColors(containerColor = CafeOrange)) {
                     Icon(
                         imageVector = Icons.Default.Delete,
-                        contentDescription = "Xoá",
+                        contentDescription = stringResource(R.string.admin_action_delete),
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Xoá")
+                    Text(text = stringResource(R.string.admin_action_delete))
                 }
             }
         }
@@ -413,13 +451,18 @@ private fun CategoryDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isSubmitting) onDismiss() },
-        title = { Text(text = if (isEdit) "Chỉnh sửa danh mục" else "Thêm danh mục") },
+        title = {
+            Text(
+                text = if (isEdit) stringResource(R.string.admin_category_dialog_edit)
+                else stringResource(R.string.admin_category_dialog_add)
+            )
+        },
         text = {
             Column {
                 OutlinedTextField(
                     value = name,
                     onValueChange = onNameChange,
-                    label = { Text("Tên danh mục") },
+                    label = { Text(stringResource(R.string.admin_category_field_name)) },
                     singleLine = true,
                     enabled = !isSubmitting,
                     modifier = Modifier.fillMaxWidth()
@@ -428,7 +471,7 @@ private fun CategoryDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = onDescriptionChange,
-                    label = { Text("Mô tả") },
+                    label = { Text(stringResource(R.string.admin_category_field_description)) },
                     enabled = !isSubmitting,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -441,12 +484,15 @@ private fun CategoryDialog(
         },
         confirmButton = {
             Button(onClick = onSubmit, enabled = !isSubmitting) {
-                Text(text = if (isEdit) "Lưu" else "Thêm")
+                Text(
+                    text = if (isEdit) stringResource(R.string.admin_action_save)
+                    else stringResource(R.string.admin_action_add)
+                )
             }
         },
         dismissButton = {
             TextButton(onClick = { if (!isSubmitting) onDismiss() }) {
-                Text("Hủy")
+                Text(stringResource(R.string.admin_action_cancel))
             }
         }
     )
@@ -461,16 +507,16 @@ private fun DeleteCategoryDialog(
 ) {
     AlertDialog(
         onDismissRequest = { if (!isSubmitting) onDismiss() },
-        title = { Text(text = "Xoá danh mục") },
-        text = { Text(text = "Bạn có chắc chắn muốn xoá \"$name\"?") },
+        title = { Text(text = stringResource(R.string.admin_category_delete_title)) },
+        text = { Text(text = stringResource(R.string.admin_category_delete_body, name)) },
         confirmButton = {
             Button(onClick = onConfirm, enabled = !isSubmitting) {
-                Text("Xoá")
+                Text(stringResource(R.string.admin_action_delete))
             }
         },
         dismissButton = {
             TextButton(onClick = { if (!isSubmitting) onDismiss() }) {
-                Text("Hủy")
+                Text(stringResource(R.string.admin_action_cancel))
             }
         }
     )

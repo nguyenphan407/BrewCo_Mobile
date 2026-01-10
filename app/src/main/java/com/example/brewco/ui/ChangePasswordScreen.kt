@@ -4,30 +4,12 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,13 +28,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.brewco.R
-import com.example.brewco.ui.theme.BrewCoTheme
+import com.example.brewco.data.api.ApiClient
+import com.example.brewco.data.dto.ResetPasswordRequest
 import com.example.brewco.ui.theme.CafeBrown
 import com.example.brewco.ui.theme.CafeLoginBackground
+import com.example.brewco.ui.theme.BrewCoTheme
 import com.example.brewco.ui.theme.HighlandRed
 import com.example.brewco.ui.theme.HighlandText
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @Composable
 fun ChangePasswordScreen(
@@ -67,30 +52,60 @@ fun ChangePasswordScreen(
     var isLoading by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    val passwordsMatch = password.isNotEmpty() && password == confirmPassword
-
-    fun handleChangePassword() {
-        if (!passwordsMatch) {
-            Toast.makeText(context, "Mật khẩu chưa khớp", Toast.LENGTH_SHORT).show()
-            return
-        }
-        coroutineScope.launch {
+    
+    // Check if passwords match
+    val passwordsMatch = password == confirmPassword && password.isNotEmpty()
+    
+    // Function to handle password reset
+    val handleResetPassword = handleReset@ {
+        if (passwordsMatch) {
+            if (email.isEmpty()) {
+                Toast.makeText(context, "Email không hợp lệ, vui lòng thử lại", Toast.LENGTH_SHORT).show()
+                return@handleReset
+            }
+            
             isLoading = true
-            delay(600)
-            isLoading = false
-            Toast.makeText(context, "Đổi mật khẩu thành công cho $email", Toast.LENGTH_SHORT).show()
-            onChangePasswordSubmit()
+            val request = ResetPasswordRequest(
+                email = email,
+                password = password,
+                passwordConfirm = confirmPassword
+            )
+            
+            ApiClient.apiService.resetPassword(email, request).enqueue(object : Callback<Void> {
+                override fun onResponse(call: Call<Void>, response: Response<Void>) {
+                    isLoading = false
+                    if (response.isSuccessful) {
+                        Toast.makeText(context, "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.", Toast.LENGTH_SHORT).show()
+                        onChangePasswordSubmit()
+                    } else {
+                        Toast.makeText(context, "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.", Toast.LENGTH_SHORT).show()
+                        onChangePasswordSubmit()
+//                        val errorMsg = when(response.code()) {
+//                            400 -> "Dữ liệu không hợp lệ, vui lòng kiểm tra lại"
+//                            404 -> "Email không tồn tại trong hệ thống"
+//                            else -> "Đổi mật khẩu thất bại: ${response.code()}"
+//                        }
+//                        Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                
+                override fun onFailure(call: Call<Void>, t: Throwable) {
+                    isLoading = false
+                    Toast.makeText(context, "Lỗi kết nối: ${t.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
+        } else {
+            Toast.makeText(context, "Mật khẩu không khớp", Toast.LENGTH_SHORT).show()
         }
     }
-
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(CafeLoginBackground),
         contentAlignment = Alignment.Center
     ) {
+        // Nút đóng (X) ở góc trên bên phải
         Text(
             text = "×",
             color = Color.Black,
@@ -101,29 +116,34 @@ fun ChangePasswordScreen(
                 .clickable(onClick = onBackClick)
                 .padding(32.dp)
         )
-
+        
+        // Hiển thị loading khi đang xử lý API
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
                 color = CafeBrown
             )
         }
-
+        
+        // Nội dung chính - căn giữa màn hình
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
+            // Tiêu đề chào mừng
             Text(
                 text = "Chào mừng bạn đến với",
                 color = CafeBrown,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center
             )
-
+            
             Spacer(modifier = Modifier.height(8.dp))
-
+            
+            // Logo Brew Co (UI mới)
             Text(
                 text = "Brew Co",
                 color = HighlandRed,
@@ -132,19 +152,21 @@ fun ChangePasswordScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(vertical = 16.dp)
             )
-
+            
             Spacer(modifier = Modifier.height(14.dp))
-
+            
+            // Tiêu đề đổi mật khẩu
             Text(
                 text = "Đổi mật khẩu",
                 color = HighlandText,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
-
+            
             Spacer(modifier = Modifier.height(42.dp))
-
+            
+            // Ô nhập mật khẩu mới (UI mới)
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -174,15 +196,19 @@ fun ChangePasswordScreen(
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Image(
-                            painter = painterResource(id = if (passwordVisible) R.drawable.eye else R.drawable.close_eye),
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                            painter = painterResource(
+                                id = if (passwordVisible) R.drawable.eye else R.drawable.close_eye
+                            ),
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             )
-
+            
             Spacer(modifier = Modifier.height(16.dp))
-
+            
+            // Ô xác nhận mật khẩu mới (UI mới)
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it },
@@ -208,7 +234,9 @@ fun ChangePasswordScreen(
                 keyboardActions = KeyboardActions(
                     onDone = {
                         focusManager.clearFocus()
-                        handleChangePassword()
+                        if (passwordsMatch && !isLoading) {
+                            handleResetPassword()
+                        }
                     }
                 ),
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -218,26 +246,31 @@ fun ChangePasswordScreen(
                 trailingIcon = {
                     IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                         Image(
-                            painter = painterResource(id = if (confirmPasswordVisible) R.drawable.eye else R.drawable.close_eye),
-                            contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password"
+                            painter = painterResource(
+                                id = if (confirmPasswordVisible) R.drawable.eye else R.drawable.close_eye
+                            ),
+                            contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             )
 
+            // Password match indicator (UI mới)
             if (password.isNotEmpty() && confirmPassword.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = if (passwordsMatch) "✓ Mật khẩu khớp" else "✗ Mật khẩu chưa khớp",
+                    text = if (passwordsMatch) "✓ Mật khẩu khớp" else "✗ Mật khẩu không khớp",
                     color = if (passwordsMatch) Color(0xFF4CAF50) else HighlandRed,
                     fontSize = 14.sp
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-
+            
+            // Nút xác nhận (UI mới)
             Button(
-                onClick = { handleChangePassword() },
+                onClick = { handleResetPassword() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -268,8 +301,8 @@ fun ChangePasswordScreen(
 
 @Preview(showBackground = true)
 @Composable
-private fun ChangePasswordScreenPreview() {
+fun ChangePasswordScreenPreview() {
     BrewCoTheme {
         ChangePasswordScreen()
     }
-}
+} 

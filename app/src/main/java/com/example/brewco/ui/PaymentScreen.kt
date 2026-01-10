@@ -683,9 +683,96 @@ private fun VoucherOptionCard(
     }
 }
 
+@Composable
+private fun SheetHeader(
+    title: String,
+    onClose: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = HighlandText
+        )
+        IconButton(onClick = onClose) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Đóng",
+                tint = HighlandText
+            )
+        }
+    }
+}
 
+@Composable
+private fun PaymentSuccessDialog(
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+    ) {
+        Card(
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = HighlandWhite)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Đóng",
+                        tint = HighlandRed
+                    )
+                }
 
+                Spacer(modifier = Modifier.height(8.dp))
 
+                Text(
+                    text = "Đặt hàng thành công!",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = HighlandText,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Đơn hàng của bạn đang được chuẩn bị.",
+                    fontSize = 15.sp,
+                    color = HighlandText.copy(alpha = 0.8f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = HighlandRed),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(text = "Về trang chủ", color = HighlandWhite, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
 
 private enum class PaymentMethod(val label: String, val iconRes: Int) {
     CASH("Tiền mặt", R.drawable.ic_cash),

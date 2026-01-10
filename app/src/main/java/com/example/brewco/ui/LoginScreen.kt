@@ -1,36 +1,16 @@
 package com.example.brewco.ui
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,45 +29,85 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.brewco.R
-import com.example.brewco.ui.theme.BrewCoTheme
-import com.example.brewco.ui.theme.CafeBeige
-import com.example.brewco.ui.theme.CafeBrown
-import com.example.brewco.ui.theme.CafeGrayText
-import com.example.brewco.ui.theme.HighlandRed
-import com.example.brewco.ui.theme.HighlandText
+import com.example.brewco.data.AuthManager
+import com.example.brewco.data.api.ApiClient
+import com.example.brewco.data.dto.LoginRequest
+import com.example.brewco.data.dto.LoginResponse
+import com.example.brewco.data.dto.UserProfileResponse
+import com.example.brewco.ui.theme.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
-private data class MockUser(
-    val email: String,
-    val password: String,
-    val fullName: String,
-    val isAdmin: Boolean = false
-)
-
-private val mockUsers = listOf(
-    MockUser(email = "gm.giaphu@gmail.com", password = "admin", fullName = "Gia Phu", isAdmin = true),
-    MockUser(email = "barista@brewco.com", password = "espresso", fullName = "Barista Brew"),
-    MockUser(email = "member@brewco.com", password = "coffeetime", fullName = "Cafe Member")
-)
 
 @Composable
 fun LoginScreen(
     onForgotPasswordClick: () -> Unit = {},
     onSignUpClick: () -> Unit = {},
-    onLoginClick: (Boolean) -> Unit = {}
+    onLoginClick: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val authManager = remember { AuthManager.getInstance(context) }
+    val authPreferences = remember(context) {
+        context.getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+    }
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
+    fun fetchAndCacheProfile(token: String, onComplete: () -> Unit) {
+        ApiClient.apiService.getCurrentUser("Bearer $token")
+            .enqueue(object : Callback<UserProfileResponse> {
+                override fun onResponse(
+                    call: Call<UserProfileResponse>,
+                    response: Response<UserProfileResponse>
+                ) {
+                    if (response.isSuccessful) {
+                        val profile = response.body()
+                        if (profile != null) {
+                            authManager.saveUserInfo(
+                                userId = profile.id,
+                                fullName = profile.fullName,
+                                phone = profile.phoneNumber.orEmpty()
+                            )
+                            authPreferences.edit()
+                                .putString("user_id", profile.id)
+                                .putString("full_name", profile.fullName)
+                                .putString("email", profile.email)
+                                .apply()
+                        }
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Không thể tải thông tin người dùng (${response.code()})",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    onComplete()
+                }
+
+                override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
+                    Toast.makeText(
+                        context,
+                        "Lỗi khi tải thông tin người dùng: ${t.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    onComplete()
+                }
+            })
+    }
+
+    // Lấy dữ liệu đã lưu (logic cũ)
+    var email by remember { mutableStateOf(authManager.getSavedEmail()) }
+    var password by remember { mutableStateOf(authManager.getSavedPassword()) }
+    var rememberMe by remember { mutableStateOf(authManager.isRememberMeEnabled()) }
+
     var passwordVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(HighlandWhite)
     ) {
+        // Phần trên với nền đỏ Highlands + hình
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -106,16 +126,18 @@ fun LoginScreen(
             )
         }
 
+        // Form đăng nhập Highlands
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1.2f)
                 .offset(y = (-40).dp)
                 .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
-                .background(Color.White)
+                .background(HighlandWhite)
                 .padding(horizontal = 24.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Text(
                 text = "Brew Co",
                 color = HighlandRed,
@@ -126,6 +148,7 @@ fun LoginScreen(
                 modifier = Modifier.padding(top = 16.dp, bottom = 50.dp)
             )
 
+            // Ô nhập email
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -134,9 +157,10 @@ fun LoginScreen(
                     .height(56.dp),
                 placeholder = {
                     Text(
-                        text = "Nhập địa chỉ gmail",
+                        "Nhập địa chỉ gmail",
                         color = CafeGrayText,
-                        fontSize = 18.sp
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(start = 0.dp)
                     )
                 },
                 colors = OutlinedTextFieldDefaults.colors(
@@ -152,6 +176,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Ô nhập mật khẩu
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -171,7 +196,9 @@ fun LoginScreen(
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Image(
-                            painter = painterResource(id = if (passwordVisible) R.drawable.eye else R.drawable.close_eye),
+                            painter = painterResource(
+                                id = if (passwordVisible) R.drawable.eye else R.drawable.close_eye
+                            ),
                             contentDescription = if (passwordVisible) "Hide password" else "Show password",
                             modifier = Modifier.size(24.dp)
                         )
@@ -179,6 +206,7 @@ fun LoginScreen(
                 }
             )
 
+            // Dòng Ghi nhớ tôi và Quên mật khẩu
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -194,19 +222,29 @@ fun LoginScreen(
                         modifier = Modifier
                             .size(12.dp)
                             .border(1.dp, CafeBrown, RoundedCornerShape(6.dp))
-                            .background(if (rememberMe) CafeBrown else Color.Transparent, RoundedCornerShape(6.dp)),
+                            .background(
+                                if (rememberMe) CafeBrown else Color.Transparent,
+                                RoundedCornerShape(6.dp)
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         if (rememberMe) {
                             Spacer(
                                 modifier = Modifier
                                     .size(5.dp)
-                                    .background(Color.White, RoundedCornerShape(2.5.dp))
+                                    .background(
+                                        HighlandWhite,
+                                        RoundedCornerShape(2.5.dp)
+                                    )
                             )
                         }
                     }
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text(text = "Ghi nhớ tôi", color = HighlandText, fontSize = 12.sp)
+                    Text(
+                        text = "Ghi nhớ tôi",
+                        color = HighlandText,
+                        fontSize = 12.sp
+                    )
                 }
 
                 Text(
@@ -217,28 +255,79 @@ fun LoginScreen(
                 )
             }
 
+            // Nút đăng nhập: giữ logic cũ (AuthManager + API) nhưng giao diện Highlands
             Button(
                 onClick = {
-                    if (email.isBlank() || password.isBlank()) {
-                        Toast.makeText(context, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-                    isLoading = true
-                    val matchedUser = mockUsers.firstOrNull { user ->
-                        user.email.equals(email.trim(), ignoreCase = true) && user.password == password
-                    }
-                    if (matchedUser != null) {
-                        Toast.makeText(context, "Chào mừng trở lại ${matchedUser.fullName}!", Toast.LENGTH_SHORT).show()
-                        onLoginClick(matchedUser.isAdmin)
+                    if (email.isNotEmpty() && password.isNotEmpty()) {
+                        isLoading = true
+
+                        // Kiểm tra admin (đơn giản)
+                        if (email == "gm.giaphu@gmail.com" && password == "admin") {
+                            authManager.saveLoginCredentials(email, password, rememberMe)
+
+                            Toast.makeText(context, "Đăng nhập quản trị thành công!", Toast.LENGTH_SHORT).show()
+                            onLoginClick()
+                            isLoading = false
+                        } else {
+                            val loginRequest = LoginRequest(
+                                email = email,
+                                password = password,
+                                rememberMe = rememberMe
+                            )
+
+                            ApiClient.apiService.login(loginRequest).enqueue(object : Callback<LoginResponse> {
+                                override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                                    if (!response.isSuccessful) {
+                                        isLoading = false
+                                        val errorMsg = when(response.code()) {
+                                            401 -> "Email hoặc mật khẩu không đúng"
+                                            404 -> "Tài khoản không tồn tại"
+                                            else -> "Đăng nhập thất bại: ${response.code()}"
+                                        }
+                                        Toast.makeText(context, errorMsg, Toast.LENGTH_SHORT).show()
+                                        return
+                                    }
+
+                                    val loginResponse = response.body()
+                                    val loginData = loginResponse?.data
+                                    val token = loginData?.token
+
+                                    if (token.isNullOrBlank()) {
+                                        isLoading = false
+                                        Toast.makeText(context, "Không nhận được token đăng nhập", Toast.LENGTH_SHORT).show()
+                                        return
+                                    }
+
+                                    authManager.saveLoginCredentials(email, password, rememberMe)
+                                    authPreferences.edit()
+                                        .putString("auth_token", token)
+                                        .putString("refresh_token", loginData.refreshToken.orEmpty())
+                                        .apply()
+
+                                    fetchAndCacheProfile(token) {
+                                        isLoading = false
+                                        Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
+                                        onLoginClick()
+                                    }
+                                }
+
+                                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                                    isLoading = false
+                                    Toast.makeText(context, "Lỗi kết nối: ${t.message}", Toast.LENGTH_SHORT).show()
+                                }
+                            })
+
+                        }
                     } else {
-                        Toast.makeText(context, "Email hoặc mật khẩu chưa đúng", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show()
                     }
-                    isLoading = false
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(45.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = HighlandRed),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = HighlandRed
+                ),
                 shape = RoundedCornerShape(6.dp),
                 enabled = !isLoading
             ) {
@@ -249,16 +338,25 @@ fun LoginScreen(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text(text = "Đăng Nhập", color = CafeBeige, fontSize = 16.sp)
+                    Text(
+                        text = "Đăng Nhập",
+                        color = CafeBeige,
+                        fontSize = 16.sp
+                    )
                 }
             }
 
+            // Phần đăng ký tài khoản mới
             Row(
                 modifier = Modifier.padding(top = 16.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = "Bạn chưa có tài khoản? ", color = HighlandText, fontSize = 12.sp)
+                Text(
+                    text = "Bạn chưa có tài khoản? ",
+                    color = HighlandText,
+                    fontSize = 12.sp
+                )
                 Text(
                     text = "Đăng ký ngay",
                     color = HighlandRed,
@@ -267,14 +365,16 @@ fun LoginScreen(
                     modifier = Modifier.clickable { onSignUpClick() }
                 )
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun LoginScreenPreview() {
+fun LoginScreenPreview() {
     BrewCoTheme {
         LoginScreen()
     }
-}
+} 

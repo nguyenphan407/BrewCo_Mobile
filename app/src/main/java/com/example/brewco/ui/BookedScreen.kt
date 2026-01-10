@@ -77,6 +77,7 @@ import com.example.brewco.viewmodel.OrderViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import com.example.brewco.utils.CategoryImageMapper
+import com.example.brewco.ui.mock.MockCatalog
 
 data class CategoryItem(
     val id: String,
@@ -104,6 +105,7 @@ fun BookedScreen(
     onBackClick: () -> Unit = {},
     onNavigationItemClick: (String) -> Unit = {},
     onFavoritesClick: () -> Unit = {},
+    onProductClick: (ProductResponse) -> Unit = {},
     viewModel: OrderViewModel = viewModel()
 ) {
     var showSearchDialog by remember { mutableStateOf(false) }
@@ -293,6 +295,7 @@ fun BookedScreen(
     }
 
     val backgroundColor = HighlandWhite
+    val mockMustTry = remember { MockCatalog.featuredProducts() }
 
     val collections = listOf(
         CollectionBanner("b1", R.drawable.bst_1),
@@ -483,12 +486,18 @@ fun BookedScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    if (uiState.mustTryProducts.isNotEmpty()) {
-                        uiState.mustTryProducts.forEach { product ->
+                    val displayProducts = if (uiState.mustTryProducts.isNotEmpty()) {
+                        uiState.mustTryProducts
+                    } else if (!uiState.isLoading) {
+                        mockMustTry
+                    } else emptyList()
+
+                    if (displayProducts.isNotEmpty()) {
+                        displayProducts.forEach { product ->
                             ProductCard(
                                 product = product,
                                 showNewBadge = true,
-                                onClick = { }
+                                onClick = { selected -> onProductClick(selected) }
                             )
                         }
                     } else if (uiState.isLoading) {
@@ -513,7 +522,12 @@ fun BookedScreen(
 
             categories.drop(1).forEach { category ->
                 val categoryId = category.categoryId?.toLong() ?: 0L
-                val products = uiState.productsByCategory[categoryId] ?: emptyList()
+                val products = when {
+                    uiState.productsByCategory[categoryId]?.isNotEmpty() == true ->
+                        uiState.productsByCategory[categoryId] ?: emptyList()
+                    !uiState.isLoading -> MockCatalog.productsByCategory(categoryId)
+                    else -> emptyList()
+                }
 
                 Box(
                     modifier = Modifier
@@ -538,7 +552,7 @@ fun BookedScreen(
                                 products.forEach { product ->
                                     ProductCard(
                                         product = product,
-                                        onClick = { }
+                                        onClick = { selected -> onProductClick(selected) }
                                     )
                                 }
                             }

@@ -395,6 +395,74 @@ private fun DeliveryInfoSection(
     }
 }
 
+@Composable
+private fun SelectedProductsSection(items: List<CartItem>) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = HighlandWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Column(modifier = Modifier.padding(20.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Sản phẩm đã chọn",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = HighlandText
+                )
+                Text(text = "${items.size} món", color = HighlandText.copy(alpha = 0.7f))
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            items.forEach { item ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.cup_of_cf),
+                        contentDescription = "Cup",
+                        modifier = Modifier.size(32.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "x${item.quantity} ${item.productName}",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = HighlandText,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = item.size,
+                            fontSize = 13.sp,
+                            color = HighlandText.copy(alpha = 0.7f)
+                        )
+                    }
+                    Text(
+                        text = FormatUtils.formatPrice(item.price * item.quantity),
+                        fontSize = 14.sp,
+                        color = HighlandText,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        }
+    }
+}
+
+
 
 
 private enum class PaymentMethod(val label: String, val iconRes: Int) {

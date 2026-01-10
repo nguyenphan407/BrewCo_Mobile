@@ -4,22 +4,26 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -46,7 +50,6 @@ import com.example.brewco.ui.theme.HighlandText
 import com.example.brewco.ui.theme.HighlandWhite
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.ScrollState
 
 @Composable
 fun CategoryButton(
@@ -100,30 +103,27 @@ fun CategorySheetItem(
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
-		verticalArrangement = Arrangement.Center,
 		modifier = Modifier
-			.width(90.dp)
-			.clickable { onClick() }
+			.width(100.dp)
+			.clickable(onClick = onClick)
 	) {
 		Image(
 			painter = painterResource(id = category.imageRes),
 			contentDescription = category.title,
 			modifier = Modifier
-				.size(72.dp)
-				.clip(RoundedCornerShape(16.dp)),
+				.size(70.dp)
+				.clip(RoundedCornerShape(12.dp)),
 			contentScale = ContentScale.Crop
 		)
 
 		Spacer(modifier = Modifier.height(6.dp))
 
 		Text(
-			text = category.title,
+			text = category.title.replace("\n", " "),
 			fontSize = 12.sp,
-			fontWeight = FontWeight.Medium,
 			textAlign = TextAlign.Center,
 			color = HighlandText,
-			maxLines = 2,
-			overflow = TextOverflow.Ellipsis
+			lineHeight = 14.sp
 		)
 	}
 }
@@ -178,20 +178,115 @@ fun SearchDialogWithResults(
 
 				Spacer(modifier = Modifier.height(16.dp))
 
-				if (isLoading) {
-					Text(
-						text = "Đang tìm kiếm...",
-						color = HighlandText
-					)
-				} else {
-					LazyColumn(
-						modifier = Modifier.weight(1f, fill = false)
-					) {
-						items(searchResults) { product ->
-							ProductCard(product = product, onClick = onProductClick)
+				Column(
+					modifier = Modifier
+						.weight(1f)
+						.verticalScroll(rememberScrollState())
+				) {
+					when {
+						isLoading -> {
+							Box(
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(32.dp),
+								contentAlignment = Alignment.Center
+							) {
+								CircularProgressIndicator(color = HighlandRed)
+							}
+						}
+						searchQuery.isBlank() -> {
+							Text(
+								text = "Nhập từ khóa để tìm kiếm sản phẩm",
+								fontSize = 14.sp,
+								color = HighlandText.copy(alpha = 0.6f),
+								modifier = Modifier.padding(16.dp)
+							)
+						}
+						searchResults.isEmpty() -> {
+							Text(
+								text = "Không tìm thấy sản phẩm nào",
+								fontSize = 14.sp,
+								color = HighlandText.copy(alpha = 0.6f),
+								modifier = Modifier.padding(16.dp)
+							)
+						}
+						else -> {
+							Text(
+								text = "Tìm thấy ${searchResults.size} sản phẩm",
+								fontSize = 14.sp,
+								fontWeight = FontWeight.Medium,
+								color = HighlandText,
+								modifier = Modifier.padding(bottom = 8.dp)
+							)
+
+							searchResults.forEach { product ->
+								ProductCard(
+									product = product,
+									onClick = { onProductClick(product) }
+								)
+							}
 						}
 					}
 				}
+
+				Spacer(modifier = Modifier.height(16.dp))
+
+				Button(
+					onClick = onDismiss,
+					modifier = Modifier.fillMaxWidth(),
+					colors = ButtonDefaults.buttonColors(
+						containerColor = HighlandRed
+					)
+				) {
+					Text("Đóng", color = HighlandWhite)
+				}
+			}
+		}
+	}
+}
+
+@Composable
+fun SearchDialog(
+	searchQuery: String,
+	onSearchQueryChange: (String) -> Unit,
+	onDismiss: () -> Unit
+) {
+	Dialog(
+		onDismissRequest = onDismiss,
+		properties = DialogProperties(
+			dismissOnBackPress = true,
+			dismissOnClickOutside = true
+		)
+	) {
+		Surface(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(16.dp),
+			shape = RoundedCornerShape(16.dp),
+			color = HighlandWhite
+		) {
+			Column(
+				modifier = Modifier.padding(16.dp)
+			) {
+				Text(
+					text = "Tìm kiếm",
+					fontSize = 20.sp,
+					fontWeight = FontWeight.Bold,
+					color = HighlandText
+				)
+
+				Spacer(modifier = Modifier.height(16.dp))
+
+				OutlinedTextField(
+					value = searchQuery,
+					onValueChange = onSearchQueryChange,
+					modifier = Modifier.fillMaxWidth(),
+					placeholder = { Text("Nhập tên sản phẩm...") },
+					colors = OutlinedTextFieldDefaults.colors(
+						focusedBorderColor = HighlandRed,
+						unfocusedBorderColor = HighlandText.copy(alpha = 0.3f)
+					)
+				)
 
 				Spacer(modifier = Modifier.height(16.dp))
 

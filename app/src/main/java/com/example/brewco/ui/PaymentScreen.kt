@@ -78,7 +78,8 @@ fun PaymentScreen(
     appliedVoucher: Voucher? = null,
     onVoucherApplied: (Voucher?) -> Unit = {},
     onBackClick: () -> Unit = {},
-    onNavigateToMain: () -> Unit = {}
+    onNavigateToMain: () -> Unit = {},
+    onSelectVoucher: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val profile = remember { MockProfileStore.profile }

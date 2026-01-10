@@ -59,6 +59,12 @@ interface ApiService {
         @Body request: ResetPasswordRequest
     ): Call<Void>
     
+    @GET("api/auth/logout")
+    fun logout(@Header("Authorization") token: String): Call<Void>
+
+    @GET("api/account/me")
+    fun getCurrentUser(@Header("Authorization") token: String): Call<UserProfileResponse>
+
     // Must try products
     @GET("api/products/must-try")
     fun getMustTryProducts(): Call<List<ProductResponse>>
@@ -70,6 +76,13 @@ interface ApiService {
     // Products
     @GET("api/products")
     fun getProducts(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20,
+        @Query("sort") sort: String? = null
+    ): Call<ProductListResponse>
+
+    @GET("api/products")
+    fun getProductsPaginated(
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20,
         @Query("sort") sort: String? = null

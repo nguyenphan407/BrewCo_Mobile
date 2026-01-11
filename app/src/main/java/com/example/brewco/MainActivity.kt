@@ -267,7 +267,7 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToPayment = { order ->
                                         selectedOrder = order
                                         selectedVoucher = null
-                                        pendingVnpayOrderId = order.orderId
+                                        pendingVnpayOrderId = order.paymentReferenceId
                                             ?: order.items.firstOrNull()?.orderId
                                         currentScreen = Screen.Payment
                                     }

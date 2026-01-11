@@ -1,5 +1,8 @@
 package com.example.brewco.ui
 
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,6 +45,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -59,19 +64,26 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.brewco.R
+import com.example.brewco.data.AuthManager
+import com.example.brewco.data.CartManager
+import com.example.brewco.data.OrderStatusUpdater
+import com.example.brewco.data.api.ApiClient
+import com.example.brewco.data.dto.PaymentRequest
+import com.example.brewco.data.dto.PaymentResponse
+import com.example.brewco.data.dto.UserProfileResponse
 import com.example.brewco.data.models.CartItem
 import com.example.brewco.data.models.CheckoutSummary
 import com.example.brewco.data.models.Voucher
 import com.example.brewco.ui.mock.MockCartStore
-import com.example.brewco.ui.mock.MockProfileStore
-import com.example.brewco.ui.mock.MockVoucherStore
 import com.example.brewco.ui.theme.HighlandRed
 import com.example.brewco.ui.theme.HighlandText
 import com.example.brewco.ui.theme.HighlandWhite
 import com.example.brewco.utils.FormatUtils
 import kotlin.math.roundToInt
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,20 +95,26 @@ fun PaymentScreen(
     onNavigateToMain: () -> Unit = {},
     onSelectVoucher: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val profile = remember { MockProfileStore.profile }
-    val entryIds = remember(checkoutSummary) { checkoutSummary.items.map { it.entryId } }
+    val authManager = remember { AuthManager.getInstance(context) }
+    val cartManager = remember { CartManager.getInstance() }
+    val checkoutEntryIds = remember(checkoutSummary) { checkoutSummary.items.map { it.entryId } }
+    val targetOrderIds = remember(checkoutSummary) { checkoutSummary.targetOrderIds }
+    val primaryOrderId = remember(targetOrderIds) { targetOrderIds.firstOrNull() }
+    val paymentReferenceId = checkoutSummary.paymentReferenceId
 
     var selectedPaymentMethod by remember { mutableStateOf(PaymentMethod.CASH) }
     var showPaymentMethodSheet by remember { mutableStateOf(false) }
-    var showVoucherSheet by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
     var isProcessingPayment by remember { mutableStateOf(false) }
     var paymentError by remember { mutableStateOf<String?>(null) }
     var orderNote by remember { mutableStateOf("") }
+    var userProfile by remember { mutableStateOf<UserProfileResponse?>(null) }
+    var isLoadingProfile by remember { mutableStateOf(true) }
+    var profileError by remember { mutableStateOf<String?>(null) }
 
     val paymentMethodSheetState = rememberModalBottomSheetState()
-    val voucherSheetState = rememberModalBottomSheetState()
     val coroutineScope = rememberCoroutineScope()
 
     val discountPercent = remember(appliedVoucher) {
@@ -110,6 +128,74 @@ fun PaymentScreen(
     val finalTotal = remember(discountAmount, checkoutSummary.totalPrice) {
         checkoutSummary.totalPrice - discountAmount
     }
+    val payableAmount = remember(finalTotal) { finalTotal.coerceAtLeast(0) }
+
+    LaunchedEffect(Unit) {
+        val token = authManager.getAuthToken()
+        if (token.isNullOrBlank()) {
+            profileError = "Vui lòng đăng nhập để tiếp tục"
+            isLoadingProfile = false
+            return@LaunchedEffect
+        }
+
+        ApiClient.apiService.getCurrentUser("Bearer $token")
+            .enqueue(object : Callback<UserProfileResponse> {
+                override fun onResponse(
+                    call: Call<UserProfileResponse>,
+                    response: Response<UserProfileResponse>
+                ) {
+                    isLoadingProfile = false
+                    if (response.isSuccessful) {
+                        userProfile = response.body()
+                        profileError = null
+                    } else {
+                        profileError = "Không thể tải thông tin người dùng"
+                    }
+                }
+
+                override fun onFailure(call: Call<UserProfileResponse>, t: Throwable) {
+                    isLoadingProfile = false
+                    profileError = "Lỗi kết nối: ${t.localizedMessage}"
+                    Log.e("PaymentScreen", "Load profile error", t)
+                }
+            })
+    }
+
+            val displayName = userProfile?.fullName ?: authManager.getSavedFullName() ?: "Khách hàng"
+            val displayPhone = userProfile?.phoneNumber ?: authManager.getSavedPhone() ?: "Chưa cập nhật"
+            val displayAddress = userProfile?.company ?: "BrewCo Tower, TP. HCM"
+
+            fun updateOrdersSequentially(
+                token: String,
+                orderIds: List<String>,
+                onComplete: (Boolean) -> Unit
+            ) {
+                if (orderIds.isEmpty()) {
+                    onComplete(false)
+                    return
+                }
+
+                fun updateAt(index: Int) {
+                    if (index >= orderIds.size) {
+                        onComplete(true)
+                        return
+                    }
+                    val orderId = orderIds[index]
+                    OrderStatusUpdater.updateWithToken(
+                        token = token,
+                        orderId = orderId,
+                        status = OrderStatusUpdater.STATUS_DONE
+                    ) { success ->
+                        if (success) {
+                            updateAt(index + 1)
+                        } else {
+                            onComplete(false)
+                        }
+                    }
+                }
+
+                updateAt(0)
+            }
 
     if (showSuccessDialog) {
         PaymentSuccessDialog(
@@ -162,61 +248,6 @@ fun PaymentScreen(
         }
     }
 
-    if (showVoucherSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showVoucherSheet = false },
-            sheetState = voucherSheetState,
-            containerColor = HighlandWhite,
-            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp)
-            ) {
-                SheetHeader(
-                    title = "Chọn khuyến mãi",
-                    onClose = {
-                        coroutineScope.launch {
-                            voucherSheetState.hide()
-                            showVoucherSheet = false
-                        }
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                MockVoucherStore.vouchers.forEach { voucher ->
-                    VoucherOptionCard(
-                        voucher = voucher,
-                        isApplied = appliedVoucher?.id == voucher.id,
-                        onSelect = {
-                            onVoucherApplied(voucher)
-                            coroutineScope.launch {
-                                voucherSheetState.hide()
-                                showVoucherSheet = false
-                            }
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                TextButton(
-                    onClick = {
-                        onVoucherApplied(null)
-                        coroutineScope.launch {
-                            voucherSheetState.hide()
-                            showVoucherSheet = false
-                        }
-                    },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text(text = "Bỏ chọn", color = HighlandRed, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -252,10 +283,33 @@ fun PaymentScreen(
                 .verticalScroll(scrollState)
         ) {
             DeliveryInfoSection(
-                name = profile.fullName ?: "Khách hàng",
-                phone = profile.phoneNumber ?: "Chưa cập nhật",
-                address = profile.company ?: "BrewCo Tower, TP. HCM"
+                name = displayName,
+                phone = displayPhone,
+                address = displayAddress
             )
+
+            if (isLoadingProfile) {
+                Spacer(modifier = Modifier.height(8.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .size(24.dp),
+                    color = HighlandRed,
+                    strokeWidth = 2.dp
+                )
+            }
+
+            profileError?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    color = HighlandRed,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -275,7 +329,7 @@ fun PaymentScreen(
                 discountAmount = discountAmount,
                 appliedVoucher = appliedVoucher,
                 finalTotal = finalTotal,
-                onSelectVoucher = { showVoucherSheet = true },
+                onSelectVoucher = onSelectVoucher,
                 onRemoveVoucher = { onVoucherApplied(null) }
             )
 
@@ -291,21 +345,129 @@ fun PaymentScreen(
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Button(
                     onClick = {
+                        if (isProcessingPayment) return@Button
+
                         if (checkoutSummary.items.isEmpty()) {
                             paymentError = "Giỏ hàng đang trống"
                             return@Button
                         }
-                        if (isProcessingPayment) return@Button
+
+                        val authToken = authManager.getAuthToken()?.takeIf { it.isNotBlank() }
+                        if (authToken == null) {
+                            paymentError = "Vui lòng đăng nhập lại"
+                            return@Button
+                        }
+
+                        val orderId = primaryOrderId?.takeIf { it.isNotBlank() }
+                            ?: paymentReferenceId?.takeIf { it.isNotBlank() }
+                            ?: run {
+                                paymentError = "Không xác định được mã đơn hàng"
+                                return@Button
+                            }
+                        val orderIdsForStatus = targetOrderIds
+                        if (orderIdsForStatus.isEmpty()) {
+                            paymentError = "Không xác định được mã đơn hàng"
+                            return@Button
+                        }
+
+                        fun cleanupAfterPayment() {
+                            MockCartStore.removeItems(checkoutEntryIds)
+                            cartManager.removeItems(checkoutEntryIds)
+                            appliedVoucher?.let { voucher ->
+                                ApiClient.apiService.deleteVoucher(
+                                    "Bearer $authToken",
+                                    voucher.id
+                                ).enqueue(object : Callback<Void> {
+                                    override fun onResponse(
+                                        call: Call<Void>,
+                                        response: Response<Void>
+                                    ) {
+                                        if (!response.isSuccessful) {
+                                            Log.w(
+                                                "PaymentScreen",
+                                                "Delete voucher failed ${response.code()}"
+                                            )
+                                        }
+                                    }
+
+                                    override fun onFailure(call: Call<Void>, t: Throwable) {
+                                        Log.e("PaymentScreen", "Delete voucher error", t)
+                                    }
+                                })
+                            }
+                            onVoucherApplied(null)
+                        }
 
                         paymentError = null
                         isProcessingPayment = true
-                        coroutineScope.launch {
-                            delay(600)
-                            MockCartStore.removeItems(entryIds)
-                            onVoucherApplied(null)
-                            isProcessingPayment = false
-                            showSuccessDialog = true
+
+                        if (selectedPaymentMethod == PaymentMethod.CASH) {
+                            updateOrdersSequentially(
+                                token = authToken,
+                                orderIds = orderIdsForStatus
+                            ) { success ->
+                                isProcessingPayment = false
+                                if (success) {
+                                    cleanupAfterPayment()
+                                    showSuccessDialog = true
+                                } else {
+                                    paymentError = "Không thể cập nhật trạng thái đơn hàng"
+                                }
+                            }
+                            return@Button
                         }
+
+                        val paymentRequest = PaymentRequest(
+                            amount = payableAmount,
+                            orderId = orderId,
+                            orderInfo = if (!checkoutSummary.comboId.isNullOrBlank()) {
+                                "Combo ${checkoutSummary.comboId} (${orderIdsForStatus.joinToString()})"
+                            } else {
+                                "BrewCo order $orderId"
+                            }
+                        )
+
+                        ApiClient.apiService.payWithVnpay(paymentRequest)
+                            .enqueue(object : Callback<PaymentResponse> {
+                                override fun onResponse(
+                                    call: Call<PaymentResponse>,
+                                    response: Response<PaymentResponse>
+                                ) {
+                                    isProcessingPayment = false
+                                    if (response.isSuccessful) {
+                                        val paymentResponse = response.body()
+                                        val successCode = paymentResponse?.code?.lowercase()
+                                        if (successCode == "00" || successCode == "ok") {
+                                            cleanupAfterPayment()
+                                            val paymentLink = paymentResponse?.paymentUrl
+                                            if (!paymentLink.isNullOrBlank()) {
+                                                try {
+                                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(paymentLink))
+                                                    context.startActivity(intent)
+                                                } catch (ex: Exception) {
+                                                    paymentError = "Không thể mở liên kết thanh toán"
+                                                    Log.e("PaymentScreen", "Open payment url error", ex)
+                                                }
+                                            } else {
+                                                paymentError = "Không nhận được liên kết thanh toán"
+                                            }
+                                        } else {
+                                            paymentError = "Thanh toán thất bại: ${paymentResponse?.message ?: "Lỗi không xác định"}"
+                                        }
+                                    } else {
+                                        paymentError = "Thanh toán thất bại (${response.code()}): ${response.message()}"
+                                    }
+                                }
+
+                                override fun onFailure(
+                                    call: Call<PaymentResponse>,
+                                    t: Throwable
+                                ) {
+                                    isProcessingPayment = false
+                                    paymentError = "Lỗi thanh toán: ${t.localizedMessage}"
+                                    Log.e("PaymentScreen", "Payment Failure", t)
+                                }
+                            })
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -697,38 +859,6 @@ private fun PaymentOptionRow(
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
             color = HighlandText
         )
-    }
-}
-
-@Composable
-private fun VoucherOptionCard(
-    voucher: Voucher,
-    isApplied: Boolean,
-    onSelect: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onSelect() },
-        colors = CardDefaults.cardColors(
-            containerColor = if (isApplied) HighlandRed.copy(alpha = 0.1f) else HighlandWhite
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = voucher.title,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = HighlandText
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Giảm ${voucher.discount} • HSD ${voucher.expiry}",
-                fontSize = 13.sp,
-                color = HighlandText.copy(alpha = 0.7f)
-            )
-        }
     }
 }
 
